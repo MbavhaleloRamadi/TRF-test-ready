@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Submit proof of payment - Tshikota Ro Farana Stokvel">
+    <meta name="theme-color" content="#1B5E20">
+    <title>Submit POP - Tshikota Ro Farana Stokvel</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    
+    <style>
+        /* Page-specific styles */
+        .page-header {
+            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+        
+        .page-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+        
+        .page-header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .back-link {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .back-link:hover {
+            color: white;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .banking-card {
+            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .banking-card h3 {
+            font-size: 1rem;
+            color: #1565C0;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .banking-detail {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        
+        .banking-detail:last-child {
+            border-bottom: none;
+        }
+        
+        .banking-label {
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .banking-value {
+            font-weight: 600;
+            color: #1565C0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .banking-value:hover {
+            text-decoration: underline;
+        }
+        
+        .copy-icon {
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+        
+        .section-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            color: #999;
+            font-size: 0.85rem;
+        }
+        
+        .section-divider::before,
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E0E0E0;
+        }
+        
+        .section-divider span {
+            padding: 0 1rem;
+        }
+        
+        .file-upload {
+            border: 2px dashed #C8E6C9;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #FAFAFA;
+        }
+        
+        .file-upload:hover {
+            border-color: #1B5E20;
+            background: #F1F8E9;
+        }
+        
+        .file-upload.dragover {
+            border-color: #1B5E20;
+            background: #E8F5E9;
+        }
+        
+        .file-upload.has-file {
+            border-style: solid;
+            border-color: #4CAF50;
+        }
+        
+        .file-upload.error {
+            border-color: #EF5350;
+            background: #FFEBEE;
+        }
+        
+        .file-upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .file-upload-text {
+            font-size: 0.95rem;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+        
+        .file-upload-hint {
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .file-preview {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+        
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        
+        .file-size {
+            color: #888;
+        }
+        
+        .remove-file {
+            background: #FFEBEE;
+            color: #C62828;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        .late-warning {
+            background: #FFF3E0;
+            border: 1px solid #FFB74D;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-top: 1rem;
+            display: none;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .late-warning-icon {
+            font-size: 1.25rem;
+        }
+        
+        .late-warning-text {
+            font-size: 0.9rem;
+            color: #E65100;
+        }
+        
+        .late-warning-text strong {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .upload-progress {
+            display: none;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar-container {
+            height: 6px;
+            background: #E0E0E0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #4CAF50;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Page Header -->
+    <header class="page-header">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        <h1>Submit Proof of Payment</h1>
+        <p>Upload your payment confirmation</p>
+    </header>
+
+    <!-- Form Container -->
+    <main class="form-container">
+        <!-- Banking Details Card -->
+        <div class="banking-card">
+            <h3>🏦 Banking Details</h3>
+            <div class="banking-detail">
+                <span class="banking-label">Bank</span>
+                <span class="banking-value" id="bankName">FNB</span>
+            </div>
+            <div class="banking-detail">
+                <span class="banking-label">Account Name</span>
+                <span class="banking-value" id="accountName">Tshikota Ro Farana</span>
+            </div>
+            <div class="banking-detail">
+                <span class="banking-label">Account Number</span>
+                <span class="banking-value copyable" id="accountNumber" data-copy="63190192880">
+                    63190192880
+                    <span class="copy-icon">📋</span>
+                </span>
+            </div>
+            <div class="banking-detail">
+                <span class="banking-label">Branch Code</span>
+                <span class="banking-value copyable" id="branchCode" data-copy="250655">
+                    250655
+                    <span class="copy-icon">📋</span>
+                </span>
+            </div>
+        </div>
+
+        <div class="section-divider">
+            <span>Payment Details</span>
+        </div>
+
+        <!-- Submission Form -->
+        <form id="pop-form" novalidate>
+            <div class="form-group">
+                <label for="fullName" class="form-label">Full Name <span class="required">*</span></label>
+                <input 
+                    type="text" 
+                    id="fullName" 
+                    name="fullName" 
+                    class="form-input" 
+                    placeholder="Enter your full name"
+                    required
+                    autocomplete="name"
+                >
+                <span class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="phone" class="form-label">Phone Number <span class="required">*</span></label>
+                <input 
+                    type="tel" 
+                    id="phone" 
+                    name="phone" 
+                    class="form-input" 
+                    placeholder="e.g., 0821234567"
+                    required
+                    maxlength="10"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                >
+                <span class="form-hint">We'll send a confirmation SMS to this number</span>
+                <span class="form-error"></span>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="amount" class="form-label">Amount Paid <span class="required">*</span></label>
+                    <div class="input-prefix">
+                        <span class="prefix">R</span>
+                        <input 
+                            type="number" 
+                            id="amount" 
+                            name="amount" 
+                            class="form-input" 
+                            placeholder="0.00"
+                            required
+                            min="1"
+                            step="0.01"
+                            inputmode="decimal"
+                        >
+                    </div>
+                    <span class="form-hint">Minimum R300 per month</span>
+                    <span class="form-error"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="paymentDate" class="form-label">Payment Date <span class="required">*</span></label>
+                <input 
+                    type="date" 
+                    id="paymentDate" 
+                    name="paymentDate" 
+                    class="form-input"
+                    required
+                >
+                <span class="form-error"></span>
+            </div>
+
+            <!-- Late Payment Warning -->
+            <div class="late-warning" id="lateWarning">
+                <span class="late-warning-icon">⚠️</span>
+                <div class="late-warning-text">
+                    <strong>Late Payment</strong>
+                    Payments after the 7th incur a R50 fine. This will be added to your submission.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="paymentMonth" class="form-label">Payment For Month <span class="required">*</span></label>
+                <select id="paymentMonth" name="paymentMonth" class="form-select" required>
+                    <option value="">Select month</option>
+                    <!-- Options populated by JS -->
+                </select>
+                <span class="form-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="paymentMethod" class="form-label">Payment Method <span class="required">*</span></label>
+                <select id="paymentMethod" name="paymentMethod" class="form-select" required>
+                    <option value="">Select method</option>
+                    <option value="eft">EFT / Bank Transfer</option>
+                    <option value="cash">Cash Deposit</option>
+                    <option value="ewallet">eWallet</option>
+                    <option value="other">Other</option>
+                </select>
+                <span class="form-error"></span>
+            </div>
+
+            <div class="section-divider">
+                <span>Upload Proof</span>
+            </div>
+
+            <!-- File Upload -->
+            <div class="form-group">
+                <label class="form-label">Proof of Payment <span class="required">*</span></label>
+                <div class="file-upload" id="fileUpload">
+                    <input 
+                        type="file" 
+                        id="proofFile" 
+                        accept="image/jpeg,image/png,image/gif,image/webp,image/heic,image/heif"
+                        hidden
+                    >
+                    <div class="file-upload-content">
+                        <div class="file-upload-icon">📷</div>
+                        <div class="file-upload-text">Tap to upload or drag file here</div>
+                        <div class="file-upload-hint">JPG, PNG, GIF or WebP • Max 15MB</div>
+                    </div>
+                    <div class="file-preview" id="filePreview">
+                        <img class="preview-image" id="previewImage" src="" alt="Preview">
+                        <div class="file-info">
+                            <span id="fileName"></span>
+                            <span class="file-size" id="fileSize"></span>
+                        </div>
+                        <button type="button" class="remove-file" id="removeFile">Remove</button>
+                    </div>
+                </div>
+                <span class="form-error" id="fileError"></span>
+                
+                <!-- Upload Progress -->
+                <div class="upload-progress" id="uploadProgress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                    <div class="progress-text" id="progressText">Compressing image...</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="notes" class="form-label">Notes <span class="optional">(Optional)</span></label>
+                <textarea 
+                    id="notes" 
+                    name="notes" 
+                    class="form-input form-textarea" 
+                    placeholder="Any additional information..."
+                    rows="2"
+                ></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary btn-block" id="submitBtn" style="margin-top: 1.5rem;">
+                <span class="btn-text">Submit Proof of Payment</span>
+                <span class="btn-loading" style="display: none;">
+                    <span class="spinner"></span>
+                    Submitting...
+                </span>
+            </button>
+        </form>
+    </main>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-content" style="text-align: center; padding: 2rem;">
+                <div class="modal-icon success" style="width: 80px; height: 80px; margin: 0 auto 1.5rem; background: #E8F5E9; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                </div>
+                <h2 class="modal-title" style="color: #1B5E20; margin-bottom: 0.5rem;">Submission Received!</h2>
+                <p class="modal-message" style="color: #666; margin-bottom: 1rem;">Your proof of payment has been submitted. A confirmation SMS has been sent to your phone.</p>
+                
+                <div class="reference-box" style="background: #F5F5F5; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+                    <span class="reference-label" style="display: block; font-size: 0.8rem; color: #888;">Reference Number</span>
+                    <span class="reference-value" id="referenceNumber" style="display: block; font-size: 1.5rem; font-weight: 700; color: #1B5E20;">TRF-XXXXXX</span>
+                </div>
+                
+                <p style="font-size: 0.9rem; color: #888; margin-bottom: 1.5rem;">
+                    Save this reference. You'll be notified once your payment is verified.
+                </p>
+                
+                <button type="button" class="btn btn-primary btn-block" id="doneBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/sms.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/submit-pop.js"></script>
+</body>
+</html>

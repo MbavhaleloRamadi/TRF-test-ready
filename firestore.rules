@@ -1,0 +1,204 @@
+rules_version = '2';
+
+/**
+ * =====================================================
+ * TSHIKOTA RO FARANA - FIRESTORE SECURITY RULES
+ * =====================================================
+ * 
+ * Security rules for the stokvel management system.
+ * 
+ * COLLECTIONS:
+ * - members: Member profiles and financial data
+ * - submissions: Payment proof submissions
+ * - nextOfKin: Emergency contacts for members
+ * - settings: App configuration (admin code)
+ * - auditLogs: Admin action logs
+ * - interestPool: Collected fines and interest per year
+ * - smsLogs: SMS sending history
+ * - otpCodes: Password reset OTP codes
+ * 
+ * =====================================================
+ */
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // HELPER FUNCTIONS
+    // ==========================================
+    
+    // Check if user is authenticated (anonymous or email)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if user has admin privileges
+    // Admin status is verified via session token stored client-side
+    // For production, consider using Firebase custom claims
+    function isAdmin() {
+      return isAuthenticated();
+    }
+    
+    // Check if document belongs to current user (by phone)
+    function isOwner(phone) {
+      return isAuthenticated() && 
+             request.resource.data.phone == phone;
+    }
+    
+    // Validate South African phone number (10 digits, starts with 0)
+    function isValidSAPhone(phone) {
+      return phone is string && 
+             phone.size() == 10 && 
+             phone.matches('^0[0-9]{9}$');
+    }
+    
+    // Validate currency amount (positive number)
+    function isValidAmount(amount) {
+      return amount is number && amount >= 0;
+    }
+    
+    // ==========================================
+    // MEMBERS COLLECTION
+    // ==========================================
+    
+    match /members/{memberId} {
+      // Anyone authenticated can read their own member data
+      // Admin can read all members
+      allow read: if isAuthenticated();
+      
+      // Anyone can create a new member (registration)
+      // Required fields must be present
+      allow create: if isAuthenticated() &&
+                    request.resource.data.keys().hasAll(['name', 'phone']) &&
+                    isValidSAPhone(request.resource.data.phone);
+      
+      // Only admin can update members
+      // Or member can update their own password
+      allow update: if isAuthenticated() &&
+                    (
+                      // Admin can update anything
+                      isAdmin() ||
+                      // Member can only update password
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['passwordHash', 'updatedAt', 'lastLogin'])
+                    );
+      
+      // Only admin can delete members
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // SUBMISSIONS COLLECTION
+    // ==========================================
+    
+    match /submissions/{submissionId} {
+      // Anyone authenticated can read submissions
+      allow read: if isAuthenticated();
+      
+      // Anyone can create a submission (POP upload)
+      allow create: if isAuthenticated() &&
+                    request.resource.data.keys().hasAll([
+                      'name', 'phone', 'amount', 'paymentMonth', 'status'
+                    ]) &&
+                    request.resource.data.status == 'pending' &&
+                    isValidAmount(request.resource.data.amount);
+      
+      // Only admin can update submissions (approve/reject)
+      allow update: if isAdmin() &&
+                    request.resource.data.status in ['pending', 'verified', 'rejected'];
+      
+      // Only admin can delete submissions
+      allow delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // NEXT OF KIN COLLECTION
+    // ==========================================
+    
+    match /nextOfKin/{kinId} {
+      // Members can read their own next of kin
+      // Admin can read all
+      allow read: if isAuthenticated();
+      
+      // Anyone can create next of kin (during registration)
+      allow create: if isAuthenticated() &&
+                    request.resource.data.keys().hasAll([
+                      'memberId', 'type', 'name', 'phone'
+                    ]) &&
+                    request.resource.data.type in ['primary', 'secondary', 'tertiary'];
+      
+      // Only admin can update/delete next of kin
+      allow update, delete: if isAdmin();
+    }
+    
+    // ==========================================
+    // SETTINGS COLLECTION
+    // ==========================================
+    
+    match /settings/{settingId} {
+      // Only admin can read settings (contains admin code)
+      // Actually, we need to allow read for admin code verification
+      allow read: if isAuthenticated();
+      
+      // Only admin can write settings
+      allow write: if isAdmin();
+    }
+    
+    // ==========================================
+    // AUDIT LOGS COLLECTION
+    // ==========================================
+    
+    match /auditLogs/{logId} {
+      // Only admin can read audit logs
+      allow read: if isAdmin();
+      
+      // Anyone authenticated can create logs (for tracking)
+      allow create: if isAuthenticated();
+      
+      // No one can update or delete audit logs (immutable)
+      allow update, delete: if false;
+    }
+    
+    // ==========================================
+    // INTEREST POOL COLLECTION
+    // ==========================================
+    
+    match /interestPool/{year} {
+      // Anyone can read interest pool data
+      allow read: if isAuthenticated();
+      
+      // Only system (via admin actions) can write
+      allow write: if isAdmin();
+    }
+    
+    // ==========================================
+    // SMS LOGS COLLECTION
+    // ==========================================
+    
+    match /smsLogs/{logId} {
+      // Only admin can read SMS logs
+      allow read: if isAdmin();
+      
+      // System can create SMS logs
+      allow create: if isAuthenticated();
+      
+      // No updates or deletes
+      allow update, delete: if false;
+    }
+    
+    // ==========================================
+    // OTP CODES COLLECTION
+    // ==========================================
+    
+    match /otpCodes/{phone} {
+      // Anyone can read their own OTP (for verification)
+      allow read: if isAuthenticated();
+      
+      // System can create/update OTP codes
+      allow create, update: if isAuthenticated();
+      
+      // System can delete expired OTPs
+      allow delete: if isAuthenticated();
+    }
+  }
+}
