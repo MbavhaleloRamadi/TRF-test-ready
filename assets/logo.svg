@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1B5E20"/>
+      <stop offset="100%" style="stop-color:#2E7D32"/>
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB300"/>
+      <stop offset="100%" style="stop-color:#FFC107"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="56" fill="url(#logoGradient)" stroke="#1B5E20" stroke-width="2"/>
+  
+  <!-- Hands forming circle (community symbol) -->
+  <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+    <!-- Left hand reaching up -->
+    <path d="M30 70 Q25 55 35 45 Q45 38 55 42"/>
+    <!-- Right hand reaching up -->
+    <path d="M90 70 Q95 55 85 45 Q75 38 65 42"/>
+    <!-- Connecting arc at top -->
+    <path d="M55 42 Q60 35 65 42"/>
+  </g>
+  
+  <!-- Coins stack (savings symbol) -->
+  <g transform="translate(60, 65)">
+    <ellipse cx="0" cy="10" rx="18" ry="6" fill="url(#goldGradient)" opacity="0.7"/>
+    <ellipse cx="0" cy="5" rx="18" ry="6" fill="url(#goldGradient)" opacity="0.85"/>
+    <ellipse cx="0" cy="0" rx="18" ry="6" fill="url(#goldGradient)"/>
+    <!-- R symbol on top coin -->
+    <text x="0" y="4" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#1B5E20" text-anchor="middle">R</text>
+  </g>
+  
+  <!-- Growth arrow -->
+  <g fill="none" stroke="#A5D6A7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M40 85 L60 70 L80 80"/>
+    <polyline points="72 70 80 80 90 72"/>
+  </g>
+</svg>

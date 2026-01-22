@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin Dashboard - Tshikota Ro Farana Stokvel">
+    <meta name="theme-color" content="#1B5E20">
+    <title>Admin Dashboard - Tshikota Ro Farana</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-body">
+    <!-- Admin Login Section -->
+    <main class="admin-login" id="adminLogin">
+        <a href="../index.html" class="back-link">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Back to Home
+        </a>
+
+        <div class="admin-login-card">
+            <div class="admin-login-icon">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+            </div>
+            <h1 class="admin-login-title">Admin Access</h1>
+            <p class="admin-login-subtitle">Enter the admin code to continue</p>
+
+            <form id="adminLoginForm" class="form" novalidate>
+                <div class="form-group">
+                    <label for="adminCode" class="form-label">Admin Code</label>
+                    <input 
+                        type="password" 
+                        id="adminCode" 
+                        name="adminCode" 
+                        class="form-input" 
+                        placeholder="Enter admin code"
+                        required
+                        autocomplete="off"
+                    >
+                    <span class="form-error"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+                    <span class="btn-text">Access Dashboard</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner"></span>
+                        Verifying...
+                    </span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Admin Dashboard Section -->
+    <div class="admin-dashboard" id="adminDashboard" style="display: none;">
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <a href="../index.html" class="back-button">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </a>
+            <h1 class="admin-title">Admin Dashboard</h1>
+            <button class="btn btn-ghost" id="logoutBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span class="logout-text">Logout</span>
+            </button>
+        </header>
+
+        <!-- Dashboard Stats -->
+        <section class="admin-stats">
+            <div class="admin-stat-card">
+                <div class="admin-stat-value" id="statTotalMembers">0</div>
+                <div class="admin-stat-label">Members</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-value" id="statTotalSavings">R 0</div>
+                <div class="admin-stat-label">Total Savings</div>
+            </div>
+            <div class="admin-stat-card highlight">
+                <div class="admin-stat-value" id="statPending">0</div>
+                <div class="admin-stat-label">Pending</div>
+            </div>
+            <div class="admin-stat-card">
+                <div class="admin-stat-value" id="statInterestPool">R 0</div>
+                <div class="admin-stat-label">Interest Pool</div>
+            </div>
+        </section>
+
+        <!-- Tabs Navigation -->
+        <nav class="admin-tabs" id="adminTabs">
+            <button class="admin-tab active" data-tab="pending">
+                Pending
+                <span class="tab-badge" id="pendingBadge">0</span>
+            </button>
+            <button class="admin-tab" data-tab="verified">Verified</button>
+            <button class="admin-tab" data-tab="members">Members</button>
+            <button class="admin-tab" data-tab="reports">Reports</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <main class="admin-content">
+            <!-- Pending Tab -->
+            <section class="tab-panel active" id="pendingPanel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Pending Submissions</h2>
+                    <button class="btn btn-ghost btn-sm" id="refreshPending">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <polyline points="1 20 1 14 7 14"/>
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                        </svg>
+                        Refresh
+                    </button>
+                </div>
+
+                <div class="pending-list" id="pendingList">
+                    <!-- Loading skeleton -->
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+
+                <div class="empty-state" id="pendingEmpty" style="display: none;">
+                    <div class="empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">All caught up!</p>
+                    <p class="empty-text">No pending submissions to review</p>
+                </div>
+            </section>
+
+            <!-- Verified Tab -->
+            <section class="tab-panel" id="verifiedPanel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Verified Payments</h2>
+                    <div class="filter-group">
+                        <select id="monthFilter" class="form-select form-select-sm">
+                            <option value="">All Months</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="verified-list" id="verifiedList">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+
+                <div class="empty-state" id="verifiedEmpty" style="display: none;">
+                    <div class="empty-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                    </div>
+                    <p class="empty-title">No verified payments</p>
+                    <p class="empty-text">Verified payments will appear here</p>
+                </div>
+            </section>
+
+            <!-- Members Tab -->
+            <section class="tab-panel" id="membersPanel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Manage Members</h2>
+                    <button class="btn btn-primary btn-sm" id="addMemberBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Member
+                    </button>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-bar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="memberSearch" placeholder="Search members..." class="search-input">
+                </div>
+
+                <div class="members-list" id="membersList">
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                </div>
+
+                <!-- Members Summary -->
+                <div class="members-summary" id="membersSummary">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Members</span>
+                        <span class="summary-value" id="summaryTotalMembers">0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Saved</span>
+                        <span class="summary-value" id="summaryTotalSaved">R 0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Fines</span>
+                        <span class="summary-value" id="summaryTotalFines">R 0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Reports Tab -->
+            <section class="tab-panel" id="reportsPanel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Monthly Reports</h2>
+                </div>
+
+                <div class="reports-form">
+                    <div class="form-group">
+                        <label for="reportMonth" class="form-label">Select Month</label>
+                        <select id="reportMonth" class="form-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Report Type</label>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="reportType" value="summary" checked>
+                                <span class="radio-label">Summary Report</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="reportType" value="detailed">
+                                <span class="radio-label">Detailed Transactions</span>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="reportType" value="compliance">
+                                <span class="radio-label">Compliance Report</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary btn-block" id="generateReportBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Download Report
+                    </button>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="reports-stats">
+                    <h3 class="stats-title">Current Month Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-value" id="reportTotalSubs">0</span>
+                            <span class="stat-label">Total Submissions</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="reportTotalAmount">R 0</span>
+                            <span class="stat-label">Total Amount</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="reportPendingCount">0</span>
+                            <span class="stat-label">Pending Review</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="reportVerifiedCount">0</span>
+                            <span class="stat-label">Verified</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Submission Detail Modal -->
+    <div class="modal" id="submissionModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title">Submission Details</h2>
+                <button class="modal-close" id="closeSubmissionModal" title="Close submission details">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="submission-detail">
+                    <div class="detail-section">
+                        <h3>Member Information</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Name</span>
+                            <span class="detail-value" id="detailName">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Phone</span>
+                            <span class="detail-value" id="detailPhone">-</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Payment Details</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Amount</span>
+                            <span class="detail-value highlight" id="detailAmount">R 0</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Payment Date</span>
+                            <span class="detail-value" id="detailPaymentDate">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">For Month</span>
+                            <span class="detail-value" id="detailPaymentMonth">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Method</span>
+                            <span class="detail-value" id="detailMethod">-</span>
+                        </div>
+                        <div class="detail-row" id="detailFineRow" style="display: none;">
+                            <span class="detail-label">Late Fine</span>
+                            <span class="detail-value warning" id="detailFine">R 50</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Proof of Payment</h3>
+                        <div class="proof-viewer" id="proofViewer">
+                            <img id="proofImage" src="" alt="Proof of Payment">
+                            <div class="proof-loading">
+                                <span class="spinner"></span>
+                                Loading...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-section" id="notesSection" style="display: none;">
+                        <h3>Notes</h3>
+                        <p class="detail-notes" id="detailNotes"></p>
+                    </div>
+
+                    <div class="detail-section">
+                        <h3>Submission Info</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Reference</span>
+                            <span class="detail-value mono" id="detailReference">-</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Submitted</span>
+                            <span class="detail-value" id="detailSubmittedAt">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="closeDetailBtn">Close</button>
+                <button class="btn btn-danger" id="rejectBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Reject
+                </button>
+                <button class="btn btn-primary" id="approveBtn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Approve
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div class="modal" id="addMemberModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Member</h2>
+                <button class="modal-close" id="closeAddMemberModal" title="Close add member dialog">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm" class="form" novalidate>
+                    <div class="form-group">
+                        <label for="newMemberName" class="form-label">Full Name <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="newMemberName" 
+                            name="name" 
+                            class="form-input" 
+                            placeholder="Enter full name"
+                            required
+                        >
+                        <span class="form-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newMemberPhone" class="form-label">Phone Number <span class="required">*</span></label>
+                        <input 
+                            type="tel" 
+                            id="newMemberPhone" 
+                            name="phone" 
+                            class="form-input" 
+                            placeholder="e.g., 0821234567"
+                            required
+                            pattern="[0-9]{10}"
+                        >
+                        <span class="form-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newMemberEmail" class="form-label">Email (Optional)</label>
+                        <input 
+                            type="email" 
+                            id="newMemberEmail" 
+                            name="email" 
+                            class="form-input" 
+                            placeholder="Enter email address"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="newMemberNotes" class="form-label">Notes (Optional)</label>
+                        <textarea 
+                            id="newMemberNotes" 
+                            name="notes" 
+                            class="form-textarea" 
+                            placeholder="Any additional notes..."
+                            rows="2"
+                        ></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="cancelAddMember">Cancel</button>
+                <button class="btn btn-primary" id="saveMemberBtn">
+                    <span class="btn-text">Add Member</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner"></span>
+                        Adding...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Reason Modal -->
+    <div class="modal" id="rejectModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 class="modal-title">Reject Submission</h2>
+                <button class="modal-close" id="closeRejectModal" title="Close reject dialog">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rejectReason" class="form-label">Reason for Rejection <span class="required">*</span></label>
+                    <textarea 
+                        id="rejectReason" 
+                        class="form-textarea" 
+                        placeholder="Enter reason for rejection..."
+                        rows="3"
+                        required
+                    ></textarea>
+                    <span class="form-hint">This will be recorded in the audit log</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" id="cancelReject">Cancel</button>
+                <button class="btn btn-danger" id="confirmRejectBtn">
+                    <span class="btn-text">Confirm Rejection</span>
+                    <span class="btn-loading" style="display: none;">
+                        <span class="spinner"></span>
+                        Rejecting...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-container modal-small">
+            <div class="modal-content">
+                <div class="modal-icon" id="confirmIcon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                </div>
+                <h2 class="modal-title" id="confirmTitle">Confirm Action</h2>
+                <p class="modal-message" id="confirmMessage">Are you sure you want to proceed?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
+                    <button class="btn btn-primary" id="confirmOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <!-- App Scripts -->
+    <script src="../js/firebase-config.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/admin.js"></script>
+</body>
+</html>
