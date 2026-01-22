@@ -569,17 +569,20 @@ const Database = {
                 });
             }
 
-            // Send SMS confirmation
+            // Send SMS confirmation (don't fail submission if SMS fails)
             try {
-                await SMS.sendPOPConfirmation(normalizedPhone, {
-                    name: submissionData.name,
-                    amount: submissionData.amount,
-                    reference: reference,
-                    paymentMonth: submissionData.paymentMonth
-                });
+                if (typeof SMS !== 'undefined' && SMS.sendPOPConfirmation) {
+                    await SMS.sendPOPConfirmation(
+                        normalizedPhone,
+                        submissionData.name,
+                        submissionData.amount,
+                        submissionData.paymentMonth,
+                        reference
+                    );
+                }
             } catch (smsError) {
-                console.warn('SMS confirmation failed:', smsError);
-                // Don't fail submission if SMS fails
+                console.warn('⚠️ SMS confirmation failed (non-critical):', smsError.message);
+                // Don't fail submission if SMS fails - submission was successful
             }
 
             console.log('✅ POP submitted:', reference);
@@ -804,17 +807,20 @@ const Database = {
                 memberId
             });
 
-            // Send approval SMS
+            // Send approval SMS (don't fail approval if SMS fails)
             try {
-                const member = memberId ? await this.getMember(memberId) : null;
-                await SMS.sendApprovalNotification(submission.phone, {
-                    name: submission.name,
-                    amount: submission.amount,
-                    month: submission.paymentMonth,
-                    totalSaved: member?.totalSavings || submission.amount
-                });
+                if (typeof SMS !== 'undefined' && SMS.sendApprovalNotification) {
+                    const member = memberId ? await this.getMember(memberId) : null;
+                    await SMS.sendApprovalNotification(
+                        submission.phone,
+                        submission.name,
+                        submission.amount,
+                        submission.paymentMonth,
+                        member?.totalSavings || submission.amount
+                    );
+                }
             } catch (smsError) {
-                console.warn('Approval SMS failed:', smsError);
+                console.warn('⚠️ Approval SMS failed (non-critical):', smsError.message);
             }
 
             console.log('✅ Submission approved:', submission.reference);
@@ -869,15 +875,19 @@ const Database = {
                 reason
             });
 
-            // Send rejection SMS
+            // Send rejection SMS (don't fail rejection if SMS fails)
             try {
-                await SMS.send(submission.phone, 'paymentRejected', {
-                    name: submission.name,
-                    amount: submission.amount,
-                    reason: reason || 'Please contact admin for details'
-                });
+                if (typeof SMS !== 'undefined' && SMS.sendRejectionNotification) {
+                    await SMS.sendRejectionNotification(
+                        submission.phone,
+                        submission.name,
+                        submission.amount,
+                        submission.paymentMonth,
+                        reason || 'Please contact admin'
+                    );
+                }
             } catch (smsError) {
-                console.warn('Rejection SMS failed:', smsError);
+                console.warn('⚠️ Rejection SMS failed (non-critical):', smsError.message);
             }
 
             console.log('⛔ Submission rejected:', submission.reference);
