@@ -5,6 +5,10 @@
  * 
  * Firebase project configuration and app settings.
  * 
+ * DUAL DATABASE ARCHITECTURE:
+ * - Firestore: Individual records, audit trails, complex queries
+ * - Realtime Database: Live totals, real-time sync to frontend
+ * 
  * IMPORTANT: 
  * - This uses Firebase Spark (free) plan
  * - No Firebase Storage (images stored as base64 in Firestore)
@@ -14,19 +18,24 @@
  */
 
 // Firebase configuration
+// ⚠️ UPDATE THESE VALUES with your actual Firebase project config
 const firebaseConfig = {
     apiKey: "AIzaSyC1lP0F8d4A5M0hOlr-dKw5V9Y8Z6X7W2U",
     authDomain: "tahikota-stockvel.firebaseapp.com",
     projectId: "tahikota-stockvel",
     storageBucket: "tahikota-stockvel.appspot.com",
     messagingSenderId: "123456789012",
-    appId: "1:123456789012:web:abcdef123456789012"
+    appId: "1:123456789012:web:abcdef123456789012",
+    // REALTIME DATABASE URL - Required for real-time totals
+    databaseURL: "https://tahikota-stockvel-default-rtdb.firebaseio.com"
 };
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize Firestore
+// ==========================================
+// FIRESTORE (Individual Records + Audit)
+// ==========================================
 const db = firebase.firestore();
 
 // Enable offline persistence (helps with slow connections)
@@ -39,7 +48,14 @@ db.enablePersistence({ synchronizeTabs: true })
         }
     });
 
-// Initialize Auth
+// ==========================================
+// REALTIME DATABASE (Live Totals + Stats)
+// ==========================================
+const rtdb = firebase.database();
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
 const auth = firebase.auth();
 
 /**
@@ -219,10 +235,14 @@ const SAFinance = {
     }
 };
 
-// Export settings and helpers
+// Export settings, databases and helpers
 window.APP_SETTINGS = APP_SETTINGS;
 window.SAFinance = SAFinance;
 window.db = db;
+window.rtdb = rtdb;
 window.auth = auth;
 
 console.log('🔥 Firebase initialized for', APP_SETTINGS.stokvelName);
+console.log('   ├─ Firestore: ✅ Individual records + Audit');
+console.log('   ├─ Realtime DB: ✅ Live totals + Stats');
+console.log('   └─ Auth: ✅ Anonymous authentication');

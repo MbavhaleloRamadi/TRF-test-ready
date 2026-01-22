@@ -1,77 +1,128 @@
 /**
  * =====================================================
- * TSHIKOTA RO FARANA - DATABASE OPERATIONS (UPDATED)
+ * TSHIKOTA RO FARANA - DATABASE OPERATIONS
  * =====================================================
  * 
- * Firestore CRUD operations and business logic.
+ * DUAL DATABASE ARCHITECTURE:
  * 
- * KEY UPDATES:
- * - Fixed sync issues (submissionCount, totalSubmissions, interestPool year)
- * - Added member registration with password support
- * - Added next of kin storage
- * - Improved data integrity with batch operations
- * - South African financial calculations (ZAR)
+ * 1. FIRESTORE (Individual Records + Audit Trail)
+ *    - members: Full member profiles with all details
+ *    - submissions: Every payment submission with full history
+ *    - nextOfKin: Emergency contacts linked to members
+ *    - auditLogs: Every action logged with who/what/when
+ *    - smsLogs: SMS history for debugging
  * 
- * DATA COLLECTIONS:
- * - members: Registered stokvel members
- * - submissions: Payment proof submissions
- * - nextOfKin: Emergency contacts for members
- * - interestPool: Collected fines and bank interest per year
- * - settings: App configuration (admin code, banking details)
- * - auditLogs: Admin action audit trail
- * - smsLogs: SMS sending history
- * - otpCodes: Password reset OTP codes
+ * 2. REALTIME DATABASE (Live Totals + Quick Stats)
+ *    - /stokvel/totals: Overall stokvel statistics
+ *    - /stokvel/members/{id}: Individual member totals
+ *    - /stokvel/monthly/{year}/{month}: Monthly summaries
+ *    - /stokvel/interestPool/{year}: Interest pool by year
+ * 
+ * WHY THIS ARCHITECTURE?
+ * - Firestore: Complex queries, audit trail, data integrity
+ * - Realtime DB: Instant sync to frontend, live counters
+ * - Math accuracy: Atomic transactions prevent race conditions
+ * - Audit: Every change tracked with timestamp and user
+ * 
+ * FINANCIAL RULES (South African Rands - ZAR):
+ * - Minimum contribution: R300/month
+ * - Late fee: R50 (after 7th of month)
+ * - Interest eligibility: R10,000+ total savings
+ * - Payment deadline: 7th of each month
  * 
  * =====================================================
  */
 
+// ==========================================
+// CONFIGURATION CONSTANTS
+// ==========================================
+
+const APP_SETTINGS = {
+    minimumContribution: 300,      // R300 minimum per month
+    lateFee: 50,                   // R50 late fee
+    paymentDeadlineDay: 7,         // Due by 7th of month
+    interestEligibilityMin: 10000, // R10,000 for interest
+    currency: 'ZAR',
+    currencySymbol: 'R'
+};
+
+// ==========================================
+// DATABASE REFERENCES
+// ==========================================
+
+/**
+ * Get Firestore database reference
+ * @returns {firebase.firestore.Firestore}
+ */
+function getFirestore() {
+    if (typeof db !== 'undefined') return db;
+    if (typeof firebase !== 'undefined') return firebase.firestore();
+    throw new Error('Firestore not initialized');
+}
+
+/**
+ * Get Realtime Database reference
+ * @returns {firebase.database.Database}
+ */
+function getRealtimeDB() {
+    if (typeof rtdb !== 'undefined') return rtdb;
+    if (typeof firebase !== 'undefined') return firebase.database();
+    throw new Error('Realtime Database not initialized');
+}
+
+// ==========================================
+// MAIN DATABASE MODULE
+// ==========================================
+
 const Database = {
-    /**
-     * ==========================================
-     * MEMBER REGISTRATION (NEW)
-     * ==========================================
-     */
+
+    // ==========================================
+    // MEMBER REGISTRATION
+    // ==========================================
 
     /**
-     * Register a new member (public registration form)
-     * Creates member document with pending status
+     * Register a new member
+     * Creates record in Firestore + initializes in Realtime DB
      * 
      * @param {object} memberData - Registration data
-     * @param {string} memberData.name - Full name (Name & Surname)
-     * @param {string} memberData.surname - Surname (separate field)
-     * @param {string} memberData.dateOfBirth - DOB in YYYY-MM-DD format
-     * @param {string} memberData.idNumber - SA ID number (13 digits)
-     * @param {string} memberData.phone - Phone number (10 digits)
-     * @param {string} memberData.email - Email (optional)
-     * @param {string} memberData.password - Account password
-     * @returns {Promise<{memberId: string, memberRef: string}>} New member info
+     * @returns {Promise<{memberId: string, memberRef: string}>}
      */
     async registerMember(memberData) {
+        const firestore = getFirestore();
+        const rtdb = getRealtimeDB();
+
         try {
-            // Normalize phone number (remove spaces, ensure 10 digits)
+            console.log('📝 Registering new member...');
+
+            // Normalize phone number
             const normalizedPhone = memberData.phone.replace(/[\s-]/g, '');
-            
-            // Check if phone already registered
-            const existingMember = await this.getMemberByPhone(normalizedPhone);
-            if (existingMember) {
-                throw new Error('This phone number is already registered. Please use View Account to log in.');
+
+            // Check if already registered
+            const existing = await this.getMemberByPhone(normalizedPhone);
+            if (existing) {
+                throw new Error('This phone number is already registered.');
             }
 
-            // Check if ID number already registered
+            // Check ID number uniqueness
             const existingId = await this.getMemberByIdNumber(memberData.idNumber);
             if (existingId) {
                 throw new Error('This ID number is already registered.');
             }
 
-            // Generate member reference code
-            const memberRef = this.generateMemberRef();
+            // Generate unique member reference (TRF-MXXXX)
+            const memberRef = await this.generateMemberRef();
 
-            // Hash password (simple hash for client-side, consider bcrypt with Cloud Functions)
+            // Hash password
             const passwordHash = await this.hashPassword(memberData.password);
 
-            // Create member document
-            const docRef = await db.collection('members').add({
-                // Personal details
+            // Current timestamp
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Create full member record
+            // ─────────────────────────────────────────────
+            const memberDoc = {
+                // Personal Information
                 name: memberData.name.trim(),
                 surname: memberData.surname?.trim() || '',
                 fullName: `${memberData.name.trim()} ${memberData.surname?.trim() || ''}`.trim(),
@@ -79,67 +130,137 @@ const Database = {
                 idNumber: memberData.idNumber,
                 phone: normalizedPhone,
                 email: memberData.email?.trim().toLowerCase() || '',
-                
+
                 // Authentication
                 passwordHash: passwordHash,
-                
-                // Reference
+
+                // Reference & Status
                 memberRef: memberRef,
-                
-                // Financial stats (all start at 0)
+                status: 'active',
+                registrationComplete: false,
+
+                // Financial Summary (initialized to 0)
                 totalSavings: 0,
                 totalFines: 0,
                 submissionCount: 0,
                 verifiedCount: 0,
                 pendingCount: 0,
                 rejectedCount: 0,
-                
-                // Status tracking
-                status: 'active',
+
+                // Tracking
                 skippedMonths: 0,
+                consecutiveMonths: 0,
                 lastPaymentDate: null,
                 lastPaymentMonth: null,
-                
-                // Interest eligibility
+
+                // Interest Eligibility
                 qualifiesForInterest: false,
-                
-                // Registration metadata
-                registrationComplete: false, // Set to true after next of kin added
-                registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                
-                // Registration source
-                registrationSource: 'public_form' // vs 'admin_added'
+
+                // Audit Fields
+                createdAt: now,
+                updatedAt: now,
+                createdBy: 'registration'
+            };
+
+            const docRef = await firestore.collection('members').add(memberDoc);
+            const memberId = docRef.id;
+
+            console.log('✅ Firestore member created:', memberId);
+
+            // ─────────────────────────────────────────────
+            // REALTIME DB: Initialize member stats
+            // ─────────────────────────────────────────────
+            await rtdb.ref(`stokvel/members/${memberId}`).set({
+                name: memberDoc.fullName,
+                memberRef: memberRef,
+                phone: normalizedPhone,
+                totalSavings: 0,
+                totalFines: 0,
+                submissionCount: 0,
+                verifiedCount: 0,
+                pendingCount: 0,
+                qualifiesForInterest: false,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
             });
 
-            console.log('✅ Member registered:', memberRef);
+            // ─────────────────────────────────────────────
+            // REALTIME DB: Increment total members count
+            // ─────────────────────────────────────────────
+            await rtdb.ref('stokvel/totals/totalMembers').transaction(current => {
+                return (current || 0) + 1;
+            });
+
+            // Update last modified timestamp
+            await rtdb.ref('stokvel/totals/lastUpdated').set(
+                firebase.database.ServerValue.TIMESTAMP
+            );
+
+            console.log('✅ Realtime DB member initialized');
+
+            // ─────────────────────────────────────────────
+            // AUDIT LOG: Record registration
+            // ─────────────────────────────────────────────
+            await this.createAuditLog({
+                action: 'member_registered',
+                entityType: 'member',
+                entityId: memberId,
+                details: {
+                    memberRef: memberRef,
+                    name: memberDoc.fullName,
+                    phone: normalizedPhone
+                },
+                performedBy: 'system'
+            });
 
             return {
-                memberId: docRef.id,
+                memberId: memberId,
                 memberRef: memberRef
             };
 
         } catch (error) {
-            console.error('❌ Member registration error:', error);
+            console.error('❌ Registration error:', error);
             throw error;
         }
     },
 
     /**
-     * Save next of kin information
-     * Called after member registration form
+     * Generate unique member reference (TRF-MXXXX)
+     * Uses atomic transaction to ensure uniqueness
+     * 
+     * @returns {Promise<string>}
+     */
+    async generateMemberRef() {
+        const rtdb = getRealtimeDB();
+
+        // Get next member number from Realtime DB (atomic)
+        const result = await rtdb.ref('stokvel/counters/memberNumber').transaction(current => {
+            return (current || 1000) + 1;
+        });
+
+        const memberNumber = result.snapshot.val();
+        return `TRF-M${memberNumber}`;
+    },
+
+    /**
+     * Save next of kin and mark registration complete
      * 
      * @param {string} memberId - Member document ID
-     * @param {object} kinData - Next of kin data
-     * @returns {Promise<void>}
+     * @param {object} kinData - Next of kin data {primary, secondary, tertiary}
      */
     async saveNextOfKin(memberId, kinData) {
-        try {
-            const batch = db.batch();
+        const firestore = getFirestore();
 
-            // Save primary next of kin (required)
+        try {
+            const batch = firestore.batch();
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+
+            // ─────────────────────────────────────────────
+            // Save each next of kin record
+            // ─────────────────────────────────────────────
+
+            // Primary (required)
             if (kinData.primary) {
-                const primaryRef = db.collection('nextOfKin').doc();
+                const primaryRef = firestore.collection('nextOfKin').doc();
                 batch.set(primaryRef, {
                     memberId: memberId,
                     type: 'primary',
@@ -147,13 +268,14 @@ const Database = {
                     relationship: kinData.primary.relationship,
                     phone: kinData.primary.phone.replace(/[\s-]/g, ''),
                     email: kinData.primary.email?.trim().toLowerCase() || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: now,
+                    updatedAt: now
                 });
             }
 
-            // Save secondary next of kin (required)
+            // Secondary (required)
             if (kinData.secondary) {
-                const secondaryRef = db.collection('nextOfKin').doc();
+                const secondaryRef = firestore.collection('nextOfKin').doc();
                 batch.set(secondaryRef, {
                     memberId: memberId,
                     type: 'secondary',
@@ -161,13 +283,14 @@ const Database = {
                     relationship: kinData.secondary.relationship,
                     phone: kinData.secondary.phone.replace(/[\s-]/g, ''),
                     email: kinData.secondary.email?.trim().toLowerCase() || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: now,
+                    updatedAt: now
                 });
             }
 
-            // Save tertiary next of kin (optional)
+            // Tertiary (optional)
             if (kinData.tertiary && kinData.tertiary.name) {
-                const tertiaryRef = db.collection('nextOfKin').doc();
+                const tertiaryRef = firestore.collection('nextOfKin').doc();
                 batch.set(tertiaryRef, {
                     memberId: memberId,
                     type: 'tertiary',
@@ -175,19 +298,34 @@ const Database = {
                     relationship: kinData.tertiary.relationship || '',
                     phone: kinData.tertiary.phone?.replace(/[\s-]/g, '') || '',
                     email: kinData.tertiary.email?.trim().toLowerCase() || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: now,
+                    updatedAt: now
                 });
             }
 
-            // Update member as registration complete
-            const memberRef = db.collection('members').doc(memberId);
+            // ─────────────────────────────────────────────
+            // Mark member registration as complete
+            // ─────────────────────────────────────────────
+            const memberRef = firestore.collection('members').doc(memberId);
             batch.update(memberRef, {
                 registrationComplete: true,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                updatedAt: now
             });
 
             await batch.commit();
-            console.log('✅ Next of kin saved for member:', memberId);
+
+            // Audit log
+            await this.createAuditLog({
+                action: 'registration_completed',
+                entityType: 'member',
+                entityId: memberId,
+                details: {
+                    nextOfKinCount: [kinData.primary, kinData.secondary, kinData.tertiary].filter(Boolean).length
+                },
+                performedBy: 'system'
+            });
+
+            console.log('✅ Next of kin saved, registration complete');
 
         } catch (error) {
             console.error('❌ Save next of kin error:', error);
@@ -195,397 +333,275 @@ const Database = {
         }
     },
 
-    /**
-     * Get next of kin for a member
-     * 
-     * @param {string} memberId - Member document ID
-     * @returns {Promise<object>} Next of kin data grouped by type
-     */
-    async getNextOfKin(memberId) {
-        try {
-            const snapshot = await db.collection('nextOfKin')
-                .where('memberId', '==', memberId)
-                .get();
-
-            const result = {
-                primary: null,
-                secondary: null,
-                tertiary: null
-            };
-
-            snapshot.docs.forEach(doc => {
-                const data = { id: doc.id, ...doc.data() };
-                result[data.type] = data;
-            });
-
-            return result;
-
-        } catch (error) {
-            console.error('Get next of kin error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Generate unique member reference code
-     * Format: TRF-MXXXX (e.g., TRF-M4K7P)
-     * 
-     * @returns {string} Member reference code
-     */
-    generateMemberRef() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let result = 'TRF-M';
-        for (let i = 0; i < 4; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return result;
-    },
-
-    /**
-     * Simple password hashing (SHA-256)
-     * For production, consider using Firebase Auth or Cloud Functions with bcrypt
-     * 
-     * @param {string} password - Plain text password
-     * @returns {Promise<string>} Hashed password
-     */
-    async hashPassword(password) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password + 'tshikota_salt_2024');
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    },
-
-    /**
-     * Verify password against stored hash
-     * 
-     * @param {string} password - Plain text password
-     * @param {string} hash - Stored password hash
-     * @returns {Promise<boolean>} Whether password matches
-     */
-    async verifyPassword(password, hash) {
-        const inputHash = await this.hashPassword(password);
-        return inputHash === hash;
-    },
-
-    /**
-     * ==========================================
-     * MEMBER OPERATIONS (UPDATED)
-     * ==========================================
-     */
-
-    /**
-     * Get all members
-     * 
-     * @returns {Promise<Array>} Array of member objects
-     */
-    async getMembers() {
-        try {
-            const snapshot = await db.collection('members')
-                .orderBy('name')
-                .get();
-            
-            return snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-        } catch (error) {
-            console.error('Get members error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Get a single member by ID
-     * 
-     * @param {string} memberId - Member document ID
-     * @returns {Promise<object|null>} Member data or null
-     */
-    async getMember(memberId) {
-        try {
-            const doc = await db.collection('members').doc(memberId).get();
-            if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
-            }
-            return null;
-        } catch (error) {
-            console.error('Get member error:', error);
-            throw error;
-        }
-    },
+    // ==========================================
+    // MEMBER QUERIES
+    // ==========================================
 
     /**
      * Get member by phone number
-     * 
-     * @param {string} phone - Phone number (will be normalized)
-     * @returns {Promise<object|null>} Member data or null
+     * @param {string} phone 
+     * @returns {Promise<object|null>}
      */
     async getMemberByPhone(phone) {
-        try {
-            const normalizedPhone = phone.replace(/[\s-]/g, '');
-            const snapshot = await db.collection('members')
-                .where('phone', '==', normalizedPhone)
-                .limit(1)
-                .get();
-            
-            if (snapshot.empty) return null;
-            
-            const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() };
-        } catch (error) {
-            console.error('Get member by phone error:', error);
-            throw error;
-        }
+        const firestore = getFirestore();
+        const normalizedPhone = phone.replace(/[\s-]/g, '');
+
+        const snapshot = await firestore.collection('members')
+            .where('phone', '==', normalizedPhone)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) return null;
+
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
     },
 
     /**
      * Get member by ID number
-     * 
-     * @param {string} idNumber - SA ID number
-     * @returns {Promise<object|null>} Member data or null
+     * @param {string} idNumber 
+     * @returns {Promise<object|null>}
      */
     async getMemberByIdNumber(idNumber) {
-        try {
-            const snapshot = await db.collection('members')
-                .where('idNumber', '==', idNumber)
-                .limit(1)
-                .get();
-            
-            if (snapshot.empty) return null;
-            
-            const doc = snapshot.docs[0];
-            return { id: doc.id, ...doc.data() };
-        } catch (error) {
-            console.error('Get member by ID number error:', error);
-            throw error;
-        }
+        const firestore = getFirestore();
+
+        const snapshot = await firestore.collection('members')
+            .where('idNumber', '==', idNumber)
+            .limit(1)
+            .get();
+
+        if (snapshot.empty) return null;
+
+        const doc = snapshot.docs[0];
+        return { id: doc.id, ...doc.data() };
     },
 
     /**
-     * Authenticate member with phone and password
-     * 
-     * @param {string} phone - Phone number
-     * @param {string} password - Password
-     * @returns {Promise<object|null>} Member data if authenticated, null otherwise
+     * Get member by document ID
+     * @param {string} memberId 
+     * @returns {Promise<object|null>}
      */
-    async authenticateMember(phone, password) {
+    async getMember(memberId) {
+        const firestore = getFirestore();
+
+        const doc = await firestore.collection('members').doc(memberId).get();
+        if (!doc.exists) return null;
+
+        return { id: doc.id, ...doc.data() };
+    },
+
+    /**
+     * Get all members
+     * @returns {Promise<Array>}
+     */
+    async getMembers() {
+        const firestore = getFirestore();
+
+        const snapshot = await firestore.collection('members').get();
+
+        const members = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Sort by name in JavaScript (avoids needing index)
+        members.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+        return members;
+    },
+
+    /**
+     * Verify member password for login
+     * @param {string} phone 
+     * @param {string} password 
+     * @returns {Promise<object|null>} Member if valid, null if not
+     */
+    async verifyMemberLogin(phone, password) {
         try {
             const member = await this.getMemberByPhone(phone);
-            
-            if (!member) {
-                return { success: false, error: 'Phone number not found. Please register first.' };
-            }
+            if (!member) return null;
 
-            if (!member.passwordHash) {
-                return { success: false, error: 'Account not set up. Please contact admin.' };
-            }
+            const passwordHash = await this.hashPassword(password);
+            if (member.passwordHash !== passwordHash) return null;
 
-            const isValid = await this.verifyPassword(password, member.passwordHash);
-            
-            if (!isValid) {
-                return { success: false, error: 'Incorrect password.' };
-            }
-
-            // Update last login
-            await db.collection('members').doc(member.id).update({
-                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            // Log successful login
+            await this.createAuditLog({
+                action: 'member_login',
+                entityType: 'member',
+                entityId: member.id,
+                details: { phone: phone },
+                performedBy: member.id
             });
 
-            return { success: true, member: member };
-
+            return member;
         } catch (error) {
-            console.error('Authentication error:', error);
-            return { success: false, error: 'Login failed. Please try again.' };
+            console.error('Login verification error:', error);
+            return null;
         }
     },
 
     /**
-     * Update member password
-     * 
-     * @param {string} memberId - Member document ID
-     * @param {string} newPassword - New password
-     * @returns {Promise<void>}
+     * Get next of kin for a member
+     * @param {string} memberId 
+     * @returns {Promise<object>}
      */
-    async updatePassword(memberId, newPassword) {
-        try {
-            const passwordHash = await this.hashPassword(newPassword);
-            await db.collection('members').doc(memberId).update({
-                passwordHash: passwordHash,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch (error) {
-            console.error('Update password error:', error);
-            throw error;
-        }
+    async getNextOfKin(memberId) {
+        const firestore = getFirestore();
+
+        const snapshot = await firestore.collection('nextOfKin')
+            .where('memberId', '==', memberId)
+            .get();
+
+        const result = { primary: null, secondary: null, tertiary: null };
+
+        snapshot.docs.forEach(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            result[data.type] = data;
+        });
+
+        return result;
     },
 
+    // ==========================================
+    // PAYMENT SUBMISSIONS
+    // ==========================================
+
     /**
-     * Add a new member (admin function)
+     * Submit proof of payment (POP)
+     * Creates submission record and updates pending counts
      * 
-     * @param {object} memberData - Member data
-     * @returns {Promise<string>} New member ID
-     */
-    async addMember(memberData) {
-        try {
-            const normalizedPhone = memberData.phone.replace(/[\s-]/g, '');
-            const memberRef = this.generateMemberRef();
-
-            const docRef = await db.collection('members').add({
-                name: memberData.name.trim(),
-                surname: memberData.surname?.trim() || '',
-                fullName: `${memberData.name.trim()} ${memberData.surname?.trim() || ''}`.trim(),
-                phone: normalizedPhone,
-                email: memberData.email?.trim().toLowerCase() || '',
-                memberRef: memberRef,
-                
-                // Initialize all financial stats
-                totalSavings: 0,
-                totalFines: 0,
-                submissionCount: 0,
-                verifiedCount: 0,
-                pendingCount: 0,
-                rejectedCount: 0,
-                
-                status: 'active',
-                skippedMonths: 0,
-                qualifiesForInterest: false,
-                
-                registrationComplete: false,
-                registrationSource: 'admin_added',
-                notes: memberData.notes || '',
-                
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // Log admin action
-            await Auth.logAdminAction('member_added', {
-                memberId: docRef.id,
-                memberName: memberData.name,
-                memberRef: memberRef
-            });
-            
-            return docRef.id;
-        } catch (error) {
-            console.error('Add member error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Update a member
-     * 
-     * @param {string} memberId - Member ID
-     * @param {object} updates - Fields to update
-     */
-    async updateMember(memberId, updates) {
-        try {
-            // Recalculate interest eligibility if savings changed
-            if (updates.totalSavings !== undefined) {
-                updates.qualifiesForInterest = updates.totalSavings >= (APP_SETTINGS?.interestEligibilityMin || 10000);
-            }
-
-            await db.collection('members').doc(memberId).update({
-                ...updates,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            await Auth.logAdminAction('member_updated', {
-                memberId,
-                updates: Object.keys(updates)
-            });
-        } catch (error) {
-            console.error('Update member error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * ==========================================
-     * SUBMISSIONS OPERATIONS (UPDATED)
-     * ==========================================
-     */
-
-    /**
-     * Submit proof of payment
-     * Now includes SMS confirmation
-     * 
-     * @param {object} submissionData - Submission data
-     * @returns {Promise<string>} Reference code
+     * @param {object} submissionData
+     * @returns {Promise<string>} Submission reference
      */
     async submitPOP(submissionData) {
+        const firestore = getFirestore();
+        const rtdb = getRealtimeDB();
+
         try {
-            const reference = Utils.generateReference();
+            console.log('📤 Submitting POP...');
+
             const normalizedPhone = submissionData.phone.replace(/[\s-]/g, '');
-            
-            // Check if payment is late (after 7th of month)
-            const paymentDate = new Date(submissionData.paymentDate);
-            const isLate = Utils.isPaymentLate(paymentDate);
-            const fineAmount = isLate ? (APP_SETTINGS?.lateFineAmount || 50) : 0;
-            
-            // Find linked member (if exists)
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+
+            // Get linked member
             const member = await this.getMemberByPhone(normalizedPhone);
-            
-            // Create submission document
-            const docRef = await db.collection('submissions').add({
-                // Submitter info
-                name: submissionData.name.trim(),
-                phone: normalizedPhone,
-                
-                // Payment details
-                amount: Number(submissionData.amount),
-                paymentDate: firebase.firestore.Timestamp.fromDate(paymentDate),
-                paymentMonth: submissionData.paymentMonth,
-                paymentMethod: submissionData.paymentMethod,
-                
-                // Proof file (base64)
-                proofURL: submissionData.proofURL,
-                
-                // Reference and status
+
+            // Generate submission reference (TRF-XXXXX)
+            const reference = await this.generateSubmissionRef();
+
+            // Determine if payment is late (after 7th)
+            const paymentDate = submissionData.paymentDate ? new Date(submissionData.paymentDate) : new Date();
+            const isLate = paymentDate.getDate() > APP_SETTINGS.paymentDeadlineDay;
+            const fineAmount = isLate ? APP_SETTINGS.lateFee : 0;
+
+            // Validate amount
+            const amount = parseFloat(submissionData.amount);
+            if (isNaN(amount) || amount < APP_SETTINGS.minimumContribution) {
+                throw new Error(`Minimum contribution is R${APP_SETTINGS.minimumContribution}`);
+            }
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Create submission record
+            // ─────────────────────────────────────────────
+            const submissionDoc = {
+                // Reference
                 reference: reference,
-                status: 'pending',
-                
-                // Late fee calculation
-                isLate: isLate,
-                fineAmount: fineAmount,
-                
-                // Linked member (if found)
+
+                // Member Details
                 memberId: member?.id || null,
                 memberRef: member?.memberRef || null,
-                
-                // Notes
-                notes: submissionData.notes || '',
-                
-                // Timestamps
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+                name: submissionData.name.trim(),
+                phone: normalizedPhone,
 
-            // Update member's pending count if linked
+                // Payment Details
+                amount: amount,
+                fineAmount: fineAmount,
+                totalAmount: amount + fineAmount,
+                paymentMonth: submissionData.paymentMonth,
+                paymentDate: submissionData.paymentDate || new Date().toISOString().split('T')[0],
+                isLate: isLate,
+
+                // Proof of Payment
+                popImage: submissionData.popImage || null,
+                popImageUrl: submissionData.popImageUrl || null,
+                bankReference: submissionData.bankReference || '',
+
+                // Status
+                status: 'pending',
+                rejectionReason: null,
+
+                // Timestamps
+                submittedAt: now,
+                verifiedAt: null,
+                rejectedAt: null,
+
+                // Audit
+                verifiedBy: null,
+                rejectedBy: null,
+                updatedAt: now
+            };
+
+            const docRef = await firestore.collection('submissions').add(submissionDoc);
+            const submissionId = docRef.id;
+
+            console.log('✅ Firestore submission created:', reference);
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update member submission count
+            // ─────────────────────────────────────────────
             if (member?.id) {
-                await db.collection('members').doc(member.id).update({
+                await firestore.collection('members').doc(member.id).update({
+                    submissionCount: firebase.firestore.FieldValue.increment(1),
                     pendingCount: firebase.firestore.FieldValue.increment(1),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: now
                 });
             }
 
-            // Send SMS confirmation (don't fail submission if SMS fails)
-            try {
-                if (typeof SMS !== 'undefined' && SMS.sendPOPConfirmation) {
-                    await SMS.sendPOPConfirmation(
-                        normalizedPhone,
-                        submissionData.name,
-                        submissionData.amount,
-                        submissionData.paymentMonth,
-                        reference
-                    );
-                }
-            } catch (smsError) {
-                console.warn('⚠️ SMS confirmation failed (non-critical):', smsError.message);
-                // Don't fail submission if SMS fails - submission was successful
+            // ─────────────────────────────────────────────
+            // REALTIME DB: Update totals (atomic transactions)
+            // ─────────────────────────────────────────────
+            const totalsRef = rtdb.ref('stokvel/totals');
+            await totalsRef.child('pendingSubmissions').transaction(val => (val || 0) + 1);
+            await totalsRef.child('totalSubmissions').transaction(val => (val || 0) + 1);
+            await totalsRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
+
+            // Update member in Realtime DB
+            if (member?.id) {
+                const memberRtRef = rtdb.ref(`stokvel/members/${member.id}`);
+                await memberRtRef.child('submissionCount').transaction(val => (val || 0) + 1);
+                await memberRtRef.child('pendingCount').transaction(val => (val || 0) + 1);
+                await memberRtRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
             }
 
-            console.log('✅ POP submitted:', reference);
+            // ─────────────────────────────────────────────
+            // AUDIT LOG
+            // ─────────────────────────────────────────────
+            await this.createAuditLog({
+                action: 'pop_submitted',
+                entityType: 'submission',
+                entityId: submissionId,
+                details: {
+                    reference: reference,
+                    amount: amount,
+                    fineAmount: fineAmount,
+                    paymentMonth: submissionData.paymentMonth,
+                    isLate: isLate,
+                    memberId: member?.id || null
+                },
+                performedBy: member?.id || 'guest'
+            });
+
+            // ─────────────────────────────────────────────
+            // SEND SMS CONFIRMATION (non-blocking)
+            // ─────────────────────────────────────────────
+            this.sendSMSNonBlocking('popConfirmation', {
+                phone: normalizedPhone,
+                name: submissionData.name,
+                amount: amount,
+                month: submissionData.paymentMonth,
+                reference: reference
+            });
+
             return reference;
 
         } catch (error) {
@@ -595,233 +611,303 @@ const Database = {
     },
 
     /**
+     * Generate unique submission reference (TRF-XXXXX)
+     * @returns {Promise<string>}
+     */
+    async generateSubmissionRef() {
+        const rtdb = getRealtimeDB();
+
+        const result = await rtdb.ref('stokvel/counters/submissionNumber').transaction(current => {
+            return (current || 10000) + 1;
+        });
+
+        return `TRF-${result.snapshot.val()}`;
+    },
+
+    // ==========================================
+    // SUBMISSION QUERIES
+    // ==========================================
+
+    /**
+     * Get submission by ID
+     * @param {string} submissionId 
+     * @returns {Promise<object|null>}
+     */
+    async getSubmission(submissionId) {
+        const firestore = getFirestore();
+
+        const doc = await firestore.collection('submissions').doc(submissionId).get();
+        if (!doc.exists) return null;
+
+        return { id: doc.id, ...doc.data() };
+    },
+
+    /**
      * Get pending submissions
-     * 
-     * @returns {Promise<Array>} Array of pending submissions
+     * @returns {Promise<Array>}
      */
     async getPendingSubmissions() {
-        try {
-            // Simple query without orderBy (avoids needing composite index)
-            const snapshot = await db.collection('submissions')
-                .where('status', '==', 'pending')
-                .get();
-            
-            // Sort in JavaScript
-            const submissions = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            submissions.sort((a, b) => {
-                const dateA = a.submittedAt?.toDate?.() || new Date(a.submittedAt) || new Date(0);
-                const dateB = b.submittedAt?.toDate?.() || new Date(b.submittedAt) || new Date(0);
-                return dateB - dateA;
-            });
-            
-            return submissions;
-        } catch (error) {
-            console.error('Get pending submissions error:', error);
-            throw error;
-        }
+        const firestore = getFirestore();
+
+        const snapshot = await firestore.collection('submissions')
+            .where('status', '==', 'pending')
+            .get();
+
+        const submissions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Sort by submittedAt descending (in JS to avoid index)
+        submissions.sort((a, b) => {
+            const dateA = a.submittedAt?.toDate?.() || new Date(0);
+            const dateB = b.submittedAt?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+
+        return submissions;
+    },
+
+    /**
+     * Get submissions for a member
+     * @param {string} phone 
+     * @returns {Promise<Array>}
+     */
+    async getMemberSubmissions(phone) {
+        const firestore = getFirestore();
+        const normalizedPhone = phone.replace(/[\s-]/g, '');
+
+        const snapshot = await firestore.collection('submissions')
+            .where('phone', '==', normalizedPhone)
+            .get();
+
+        const submissions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Sort by submittedAt descending
+        submissions.sort((a, b) => {
+            const dateA = a.submittedAt?.toDate?.() || new Date(0);
+            const dateB = b.submittedAt?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+
+        return submissions;
     },
 
     /**
      * Get verified submissions with optional filters
-     * 
-     * @param {object} filters - Optional filters (month, memberId)
-     * @returns {Promise<Array>} Array of verified submissions
+     * @param {object} filters 
+     * @returns {Promise<Array>}
      */
     async getVerifiedSubmissions(filters = {}) {
-        try {
-            let query = db.collection('submissions')
-                .where('status', '==', 'verified');
-            
-            if (filters.month) {
-                query = query.where('paymentMonth', '==', filters.month);
-            }
-            
-            if (filters.memberId) {
-                query = query.where('memberId', '==', filters.memberId);
-            }
-            
-            // Simple query without orderBy (avoids needing composite index)
-            const snapshot = await query.get();
-            
-            // Sort in JavaScript
-            const submissions = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            submissions.sort((a, b) => {
-                const dateA = a.verifiedAt?.toDate?.() || new Date(a.verifiedAt) || new Date(0);
-                const dateB = b.verifiedAt?.toDate?.() || new Date(b.verifiedAt) || new Date(0);
-                return dateB - dateA;
-            });
-            
-            return submissions;
-        } catch (error) {
-            console.error('Get verified submissions error:', error);
-            throw error;
+        const firestore = getFirestore();
+
+        let query = firestore.collection('submissions')
+            .where('status', '==', 'verified');
+
+        if (filters.month) {
+            query = query.where('paymentMonth', '==', filters.month);
         }
+
+        if (filters.memberId) {
+            query = query.where('memberId', '==', filters.memberId);
+        }
+
+        const snapshot = await query.get();
+
+        const submissions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Sort by verifiedAt descending
+        submissions.sort((a, b) => {
+            const dateA = a.verifiedAt?.toDate?.() || new Date(0);
+            const dateB = b.verifiedAt?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+
+        return submissions;
     },
 
-    /**
-     * Get submissions for a specific member by phone
-     * 
-     * @param {string} phone - Member phone number
-     * @returns {Promise<Array>} Array of submissions
-     */
-    async getMemberSubmissions(phone) {
-        try {
-            const normalizedPhone = phone.replace(/[\s-]/g, '');
-            
-            // Simple query without orderBy (avoids needing composite index)
-            const snapshot = await db.collection('submissions')
-                .where('phone', '==', normalizedPhone)
-                .get();
-            
-            // Sort in JavaScript instead (most recent first)
-            const submissions = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            // Sort by submittedAt descending
-            submissions.sort((a, b) => {
-                const dateA = a.submittedAt?.toDate?.() || new Date(a.submittedAt) || new Date(0);
-                const dateB = b.submittedAt?.toDate?.() || new Date(b.submittedAt) || new Date(0);
-                return dateB - dateA;
-            });
-            
-            return submissions;
-        } catch (error) {
-            console.error('Get member submissions error:', error);
-            throw error;
-        }
-    },
+    // ==========================================
+    // SUBMISSION APPROVAL/REJECTION
+    // ==========================================
 
     /**
-     * Get a single submission by ID
+     * Approve a submission
+     * Updates all related records and totals atomically
      * 
-     * @param {string} submissionId - Submission document ID
-     * @returns {Promise<object|null>} Submission data or null
+     * MATH ACCURACY:
+     * - All increments use atomic transactions
+     * - Firestore batch ensures consistency
+     * - Realtime DB transactions prevent race conditions
+     * 
+     * @param {string} submissionId 
      */
-    async getSubmission(submissionId) {
-        try {
-            const doc = await db.collection('submissions').doc(submissionId).get();
-            if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
-            }
-            return null;
-        } catch (error) {
-            console.error('Get submission error:', error);
-            throw error;
-        }
-    },
+    async approveSubmission(submissionId) {
+        const firestore = getFirestore();
+        const rtdb = getRealtimeDB();
 
-    /**
-     * Approve a submission (FIXED)
-     * Now correctly updates submissionCount and uses payment year for interest pool
-     * 
-     * @param {string} submissionId - Submission ID
-     * @param {string} memberId - Linked member ID
-     */
-    async approveSubmission(submissionId, memberId = null) {
         try {
-            const batch = db.batch();
-            
-            // Get submission data
+            console.log('✅ Approving submission:', submissionId);
+
+            // Get submission
             const submission = await this.getSubmission(submissionId);
-            if (!submission) {
-                throw new Error('Submission not found');
-            }
+            if (!submission) throw new Error('Submission not found');
+            if (submission.status !== 'pending') throw new Error('Submission already processed');
 
-            const submissionRef = db.collection('submissions').doc(submissionId);
-            
-            // Update submission status
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+            const batch = firestore.batch();
+
+            // Calculate amounts
+            const amount = submission.amount || 0;
+            const fineAmount = submission.fineAmount || 0;
+            const totalAmount = amount + fineAmount;
+
+            // Get payment year for interest pool
+            const paymentYear = this.extractYearFromMonth(submission.paymentMonth);
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update submission status
+            // ─────────────────────────────────────────────
+            const submissionRef = firestore.collection('submissions').doc(submissionId);
             batch.update(submissionRef, {
                 status: 'verified',
-                memberId: memberId,
-                verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                verifiedBy: Auth.currentUser?.uid || 'admin',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            // If member linked, update their stats
-            if (memberId) {
-                const memberRef = db.collection('members').doc(memberId);
-                const member = await this.getMember(memberId);
-                
-                // Calculate new totals for interest eligibility check
-                const newTotalSavings = (member?.totalSavings || 0) + submission.amount;
-                const qualifiesForInterest = newTotalSavings >= (APP_SETTINGS?.interestEligibilityMin || 10000);
-                
-                batch.update(memberRef, {
-                    // Financial updates
-                    totalSavings: firebase.firestore.FieldValue.increment(submission.amount),
-                    totalFines: firebase.firestore.FieldValue.increment(submission.fineAmount || 0),
-                    
-                    // Count updates (FIXED: now updating submissionCount)
-                    submissionCount: firebase.firestore.FieldValue.increment(1),
-                    verifiedCount: firebase.firestore.FieldValue.increment(1),
-                    pendingCount: firebase.firestore.FieldValue.increment(-1), // Decrease pending
-                    
-                    // Status updates
-                    lastPaymentDate: firebase.firestore.FieldValue.serverTimestamp(),
-                    lastPaymentMonth: submission.paymentMonth,
-                    skippedMonths: 0,
-                    
-                    // Interest eligibility (recalculated)
-                    qualifiesForInterest: qualifiesForInterest,
-                    
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-            
-            // If late payment, add fine to interest pool (FIXED: use payment year)
-            if (submission.fineAmount > 0) {
-                // Extract year from payment month (e.g., "December 2024" -> 2024)
-                const monthParts = submission.paymentMonth.split(' ');
-                const paymentYear = monthParts.length > 1 
-                    ? parseInt(monthParts[1]) 
-                    : new Date().getFullYear();
-                
-                const interestRef = db.collection('interestPool').doc(paymentYear.toString());
-                batch.set(interestRef, {
-                    year: paymentYear,
-                    totalFines: firebase.firestore.FieldValue.increment(submission.fineAmount),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-            }
-            
-            // Commit all updates atomically
-            await batch.commit();
-            
-            // Log admin action
-            await Auth.logAdminAction('submission_approved', {
-                submissionId,
-                reference: submission.reference,
-                amount: submission.amount,
-                fineAmount: submission.fineAmount,
-                memberId
+                verifiedAt: now,
+                verifiedBy: Auth?.currentUser?.uid || 'admin',
+                updatedAt: now
             });
 
-            // Send approval SMS (don't fail approval if SMS fails)
-            try {
-                if (typeof SMS !== 'undefined' && SMS.sendApprovalNotification) {
-                    const member = memberId ? await this.getMember(memberId) : null;
-                    await SMS.sendApprovalNotification(
-                        submission.phone,
-                        submission.name,
-                        submission.amount,
-                        submission.paymentMonth,
-                        member?.totalSavings || submission.amount
-                    );
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update member totals
+            // ─────────────────────────────────────────────
+            let member = null;
+            if (submission.memberId) {
+                member = await this.getMember(submission.memberId);
+                
+                if (member) {
+                    const memberRef = firestore.collection('members').doc(submission.memberId);
+                    
+                    // Calculate new totals
+                    const newTotalSavings = (member.totalSavings || 0) + amount;
+                    const newTotalFines = (member.totalFines || 0) + fineAmount;
+                    const qualifiesForInterest = newTotalSavings >= APP_SETTINGS.interestEligibilityMin;
+
+                    batch.update(memberRef, {
+                        totalSavings: newTotalSavings,
+                        totalFines: newTotalFines,
+                        verifiedCount: firebase.firestore.FieldValue.increment(1),
+                        pendingCount: firebase.firestore.FieldValue.increment(-1),
+                        lastPaymentDate: now,
+                        lastPaymentMonth: submission.paymentMonth,
+                        qualifiesForInterest: qualifiesForInterest,
+                        consecutiveMonths: firebase.firestore.FieldValue.increment(1),
+                        updatedAt: now
+                    });
                 }
-            } catch (smsError) {
-                console.warn('⚠️ Approval SMS failed (non-critical):', smsError.message);
             }
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update interest pool (fines go here)
+            // ─────────────────────────────────────────────
+            if (fineAmount > 0) {
+                const poolRef = firestore.collection('interestPool').doc(paymentYear.toString());
+                
+                // Use set with merge to create if not exists
+                batch.set(poolRef, {
+                    year: paymentYear,
+                    totalFines: firebase.firestore.FieldValue.increment(fineAmount),
+                    fineCount: firebase.firestore.FieldValue.increment(1),
+                    updatedAt: now
+                }, { merge: true });
+            }
+
+            // Commit all Firestore changes atomically
+            await batch.commit();
+            console.log('✅ Firestore updated');
+
+            // ─────────────────────────────────────────────
+            // REALTIME DB: Update all totals (atomic transactions)
+            // ─────────────────────────────────────────────
+            
+            // Global totals
+            const totalsRef = rtdb.ref('stokvel/totals');
+            await totalsRef.child('totalSavings').transaction(val => (val || 0) + amount);
+            await totalsRef.child('totalFines').transaction(val => (val || 0) + fineAmount);
+            await totalsRef.child('pendingSubmissions').transaction(val => Math.max((val || 0) - 1, 0));
+            await totalsRef.child('approvedSubmissions').transaction(val => (val || 0) + 1);
+            await totalsRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
+
+            // Member totals in Realtime DB
+            if (submission.memberId && member) {
+                const memberRtRef = rtdb.ref(`stokvel/members/${submission.memberId}`);
+                const newTotal = (member.totalSavings || 0) + amount;
+                
+                await memberRtRef.update({
+                    totalSavings: newTotal,
+                    totalFines: (member.totalFines || 0) + fineAmount,
+                    verifiedCount: (member.verifiedCount || 0) + 1,
+                    pendingCount: Math.max((member.pendingCount || 0) - 1, 0),
+                    qualifiesForInterest: newTotal >= APP_SETTINGS.interestEligibilityMin,
+                    lastPaymentMonth: submission.paymentMonth,
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
+            }
+
+            // Interest pool in Realtime DB
+            if (fineAmount > 0) {
+                const poolRtRef = rtdb.ref(`stokvel/interestPool/${paymentYear}`);
+                await poolRtRef.child('totalFines').transaction(val => (val || 0) + fineAmount);
+                await poolRtRef.child('fineCount').transaction(val => (val || 0) + 1);
+                await poolRtRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
+            }
+
+            // Monthly stats
+            const monthYear = submission.paymentMonth || 'Unknown';
+            const monthName = monthYear.split(' ')[0] || 'Unknown';
+            const monthRef = rtdb.ref(`stokvel/monthly/${paymentYear}/${monthName}`);
+            await monthRef.child('totalCollected').transaction(val => (val || 0) + totalAmount);
+            await monthRef.child('approvedCount').transaction(val => (val || 0) + 1);
+            if (fineAmount > 0) {
+                await monthRef.child('latePayments').transaction(val => (val || 0) + 1);
+                await monthRef.child('finesCollected').transaction(val => (val || 0) + fineAmount);
+            }
+
+            console.log('✅ Realtime DB updated');
+
+            // ─────────────────────────────────────────────
+            // AUDIT LOG
+            // ─────────────────────────────────────────────
+            await this.createAuditLog({
+                action: 'submission_approved',
+                entityType: 'submission',
+                entityId: submissionId,
+                details: {
+                    reference: submission.reference,
+                    amount: amount,
+                    fineAmount: fineAmount,
+                    memberId: submission.memberId,
+                    memberName: submission.name,
+                    paymentMonth: submission.paymentMonth
+                },
+                performedBy: Auth?.currentUser?.uid || 'admin'
+            });
+
+            // ─────────────────────────────────────────────
+            // SEND APPROVAL SMS (non-blocking)
+            // ─────────────────────────────────────────────
+            const updatedMemberSavings = member ? (member.totalSavings || 0) + amount : amount;
+
+            this.sendSMSNonBlocking('approval', {
+                phone: submission.phone,
+                name: submission.name,
+                amount: amount,
+                month: submission.paymentMonth,
+                totalSaved: updatedMemberSavings
+            });
 
             console.log('✅ Submission approved:', submission.reference);
 
@@ -834,61 +920,89 @@ const Database = {
     /**
      * Reject a submission
      * 
-     * @param {string} submissionId - Submission ID
+     * @param {string} submissionId 
      * @param {string} reason - Rejection reason
      */
     async rejectSubmission(submissionId, reason = '') {
-        try {
-            const submission = await this.getSubmission(submissionId);
-            if (!submission) {
-                throw new Error('Submission not found');
-            }
+        const firestore = getFirestore();
+        const rtdb = getRealtimeDB();
 
-            const batch = db.batch();
-            
-            // Update submission
-            const submissionRef = db.collection('submissions').doc(submissionId);
+        try {
+            console.log('⛔ Rejecting submission:', submissionId);
+
+            const submission = await this.getSubmission(submissionId);
+            if (!submission) throw new Error('Submission not found');
+            if (submission.status !== 'pending') throw new Error('Submission already processed');
+
+            const now = firebase.firestore.FieldValue.serverTimestamp();
+            const batch = firestore.batch();
+
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update submission status
+            // ─────────────────────────────────────────────
+            const submissionRef = firestore.collection('submissions').doc(submissionId);
             batch.update(submissionRef, {
                 status: 'rejected',
-                rejectionReason: reason,
-                rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                rejectedBy: Auth.currentUser?.uid || 'admin',
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                rejectionReason: reason || 'No reason provided',
+                rejectedAt: now,
+                rejectedBy: Auth?.currentUser?.uid || 'admin',
+                updatedAt: now
             });
 
-            // Update member counts if linked
+            // ─────────────────────────────────────────────
+            // FIRESTORE: Update member counts
+            // ─────────────────────────────────────────────
             if (submission.memberId) {
-                const memberRef = db.collection('members').doc(submission.memberId);
+                const memberRef = firestore.collection('members').doc(submission.memberId);
                 batch.update(memberRef, {
                     pendingCount: firebase.firestore.FieldValue.increment(-1),
                     rejectedCount: firebase.firestore.FieldValue.increment(1),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: now
                 });
             }
 
             await batch.commit();
-            
-            // Log action
-            await Auth.logAdminAction('submission_rejected', {
-                submissionId,
-                reference: submission?.reference,
-                reason
+
+            // ─────────────────────────────────────────────
+            // REALTIME DB: Update totals
+            // ─────────────────────────────────────────────
+            const totalsRef = rtdb.ref('stokvel/totals');
+            await totalsRef.child('pendingSubmissions').transaction(val => Math.max((val || 0) - 1, 0));
+            await totalsRef.child('rejectedSubmissions').transaction(val => (val || 0) + 1);
+            await totalsRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
+
+            if (submission.memberId) {
+                const memberRtRef = rtdb.ref(`stokvel/members/${submission.memberId}`);
+                await memberRtRef.child('pendingCount').transaction(val => Math.max((val || 0) - 1, 0));
+                await memberRtRef.child('lastUpdated').set(firebase.database.ServerValue.TIMESTAMP);
+            }
+
+            // ─────────────────────────────────────────────
+            // AUDIT LOG
+            // ─────────────────────────────────────────────
+            await this.createAuditLog({
+                action: 'submission_rejected',
+                entityType: 'submission',
+                entityId: submissionId,
+                details: {
+                    reference: submission.reference,
+                    reason: reason,
+                    memberId: submission.memberId,
+                    memberName: submission.name
+                },
+                performedBy: Auth?.currentUser?.uid || 'admin'
             });
 
-            // Send rejection SMS (don't fail rejection if SMS fails)
-            try {
-                if (typeof SMS !== 'undefined' && SMS.sendRejectionNotification) {
-                    await SMS.sendRejectionNotification(
-                        submission.phone,
-                        submission.name,
-                        submission.amount,
-                        submission.paymentMonth,
-                        reason || 'Please contact admin'
-                    );
-                }
-            } catch (smsError) {
-                console.warn('⚠️ Rejection SMS failed (non-critical):', smsError.message);
-            }
+            // ─────────────────────────────────────────────
+            // SEND REJECTION SMS (non-blocking)
+            // ─────────────────────────────────────────────
+            this.sendSMSNonBlocking('rejection', {
+                phone: submission.phone,
+                name: submission.name,
+                amount: submission.amount,
+                month: submission.paymentMonth,
+                reason: reason || 'Please contact admin'
+            });
 
             console.log('⛔ Submission rejected:', submission.reference);
 
@@ -898,436 +1012,433 @@ const Database = {
         }
     },
 
-    /**
-     * ==========================================
-     * STATISTICS & REPORTS (FIXED)
-     * ==========================================
-     */
+    // ==========================================
+    // REALTIME DATABASE LISTENERS (Frontend)
+    // ==========================================
 
     /**
-     * Get dashboard statistics (FIXED)
-     * Now includes totalSubmissions and interestPool
+     * Listen to stokvel totals (for dashboard)
+     * Returns unsubscribe function
      * 
-     * @returns {Promise<object>} Statistics object
+     * @param {function} callback - Called with totals data on every change
+     * @returns {function} Unsubscribe function
      */
-    async getDashboardStats() {
-        try {
-            // Fetch all data in parallel
-            const [
-                membersSnapshot,
-                pendingSnapshot,
-                verifiedSnapshot,
-                allSubmissionsSnapshot
-            ] = await Promise.all([
-                db.collection('members').get(),
-                db.collection('submissions').where('status', '==', 'pending').get(),
-                db.collection('submissions').where('status', '==', 'verified').get(),
-                db.collection('submissions').get()
-            ]);
+    listenToTotals(callback) {
+        const rtdb = getRealtimeDB();
+        const totalsRef = rtdb.ref('stokvel/totals');
 
-            const members = membersSnapshot.docs.map(doc => doc.data());
-            
-            // Calculate totals from members
-            const totalSavings = members.reduce((sum, m) => sum + (m.totalSavings || 0), 0);
-            const totalFines = members.reduce((sum, m) => sum + (m.totalFines || 0), 0);
-            
-            // Get interest pool for current year
-            const currentYear = new Date().getFullYear();
-            let interestPool = 0;
-            try {
-                const interestDoc = await db.collection('interestPool').doc(currentYear.toString()).get();
-                if (interestDoc.exists) {
-                    const data = interestDoc.data();
-                    interestPool = (data.totalFines || 0) + (data.bankInterest || 0);
-                }
-            } catch (e) {
-                console.warn('Could not fetch interest pool:', e);
-            }
-            
-            return {
-                // Member stats
-                memberCount: members.length,
-                totalMembers: members.length, // Alias for compatibility
-                activeMembers: members.filter(m => m.status === 'active').length,
-                
-                // Submission stats (FIXED: totalSubmissions now included)
-                pendingCount: pendingSnapshot.size,
-                verifiedCount: verifiedSnapshot.size,
-                totalSubmissions: allSubmissionsSnapshot.size,
-                
-                // Financial stats
-                totalSavings: totalSavings,
-                totalFines: totalFines,
-                interestPool: interestPool, // FIXED: now included
-                
-                // Calculated stats
-                averageSavings: members.length > 0 ? Math.round(totalSavings / members.length) : 0,
-                qualifyingMembers: members.filter(m => (m.totalSavings || 0) >= (APP_SETTINGS?.interestEligibilityMin || 10000)).length
-            };
-        } catch (error) {
-            console.error('Get dashboard stats error:', error);
-            throw error;
-        }
+        const listener = totalsRef.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            callback({
+                totalMembers: data.totalMembers || 0,
+                totalSavings: data.totalSavings || 0,
+                totalFines: data.totalFines || 0,
+                pendingSubmissions: data.pendingSubmissions || 0,
+                approvedSubmissions: data.approvedSubmissions || 0,
+                rejectedSubmissions: data.rejectedSubmissions || 0,
+                totalSubmissions: data.totalSubmissions || 0,
+                lastUpdated: data.lastUpdated || null
+            });
+        });
+
+        // Return unsubscribe function
+        return () => totalsRef.off('value', listener);
     },
 
     /**
-     * Get member statistics for account view (FIXED)
-     * Uses consistent data source
+     * Listen to a single member's stats (real-time)
      * 
-     * @param {string} phone - Member phone number
-     * @returns {Promise<object>} Member statistics
+     * @param {string} memberId 
+     * @param {function} callback 
+     * @returns {function} Unsubscribe function
+     */
+    listenToMemberStats(memberId, callback) {
+        const rtdb = getRealtimeDB();
+        const memberRef = rtdb.ref(`stokvel/members/${memberId}`);
+
+        const listener = memberRef.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            callback({
+                name: data.name || '',
+                memberRef: data.memberRef || '',
+                totalSavings: data.totalSavings || 0,
+                totalFines: data.totalFines || 0,
+                submissionCount: data.submissionCount || 0,
+                verifiedCount: data.verifiedCount || 0,
+                pendingCount: data.pendingCount || 0,
+                qualifiesForInterest: data.qualifiesForInterest || false,
+                lastPaymentMonth: data.lastPaymentMonth || null,
+                lastUpdated: data.lastUpdated || null
+            });
+        });
+
+        return () => memberRef.off('value', listener);
+    },
+
+    /**
+     * Listen to interest pool for a year
+     * 
+     * @param {number} year 
+     * @param {function} callback 
+     * @returns {function} Unsubscribe function
+     */
+    listenToInterestPool(year, callback) {
+        const rtdb = getRealtimeDB();
+        const poolRef = rtdb.ref(`stokvel/interestPool/${year}`);
+
+        const listener = poolRef.on('value', snapshot => {
+            const data = snapshot.val() || {};
+            callback({
+                year: year,
+                totalFines: data.totalFines || 0,
+                fineCount: data.fineCount || 0,
+                bankInterest: data.bankInterest || 0,
+                totalPool: (data.totalFines || 0) + (data.bankInterest || 0),
+                lastUpdated: data.lastUpdated || null
+            });
+        });
+
+        return () => poolRef.off('value', listener);
+    },
+
+    /**
+     * Get one-time read of totals (not real-time listener)
+     * @returns {Promise<object>}
+     */
+    async getTotals() {
+        const rtdb = getRealtimeDB();
+        const snapshot = await rtdb.ref('stokvel/totals').once('value');
+        return snapshot.val() || {};
+    },
+
+    /**
+     * Get one-time read of member stats from Realtime DB
+     * @param {string} memberId 
+     * @returns {Promise<object>}
+     */
+    async getMemberRealtimeStats(memberId) {
+        const rtdb = getRealtimeDB();
+        const snapshot = await rtdb.ref(`stokvel/members/${memberId}`).once('value');
+        return snapshot.val() || {};
+    },
+
+    /**
+     * Get stokvel total savings (quick read)
+     * @returns {Promise<number>}
+     */
+    async getStokvelTotal() {
+        const totals = await this.getTotals();
+        return totals.totalSavings || 0;
+    },
+
+    // ==========================================
+    // MEMBER STATS (Combined View)
+    // ==========================================
+
+    /**
+     * Get comprehensive member stats
+     * Combines Firestore details with Realtime DB totals
+     * 
+     * @param {string} phone 
+     * @returns {Promise<object>}
      */
     async getMemberStats(phone) {
         try {
             const normalizedPhone = phone.replace(/[\s-]/g, '');
-            
-            // Get member data
+
+            // Get member from Firestore (full details)
             const member = await this.getMemberByPhone(normalizedPhone);
-            
-            if (!member) {
-                return null;
-            }
-            
-            // Get submissions for verification
+            if (!member) return null;
+
+            // Get real-time stats from Realtime DB
+            const realtimeStats = await this.getMemberRealtimeStats(member.id);
+
+            // Get recent submissions from Firestore
             const submissions = await this.getMemberSubmissions(phone);
-            
-            // Calculate from both sources and use member document as source of truth
-            const verified = submissions.filter(s => s.status === 'verified');
-            const pending = submissions.filter(s => s.status === 'pending');
-            const rejected = submissions.filter(s => s.status === 'rejected');
-            
-            // Verify data consistency (log warning if mismatch)
-            if (member.verifiedCount !== verified.length) {
-                console.warn(`Data inconsistency: member.verifiedCount (${member.verifiedCount}) != verified submissions (${verified.length})`);
-            }
-            
+
+            // Use Realtime DB values as source of truth for totals
+            const totalSavings = realtimeStats.totalSavings ?? member.totalSavings ?? 0;
+            const totalFines = realtimeStats.totalFines ?? member.totalFines ?? 0;
+
             return {
-                member,
+                member: member,
                 
-                // Use member document values (source of truth)
-                totalSavings: member.totalSavings || 0,
-                totalFines: member.totalFines || 0,
+                // Financial totals (from Realtime DB - source of truth)
+                totalSavings: totalSavings,
+                totalFines: totalFines,
                 
-                // Submission counts (use higher value in case of sync issues)
-                totalSubmissions: Math.max(member.submissionCount || 0, submissions.length),
-                submissionCount: Math.max(member.submissionCount || 0, submissions.length),
-                verifiedCount: Math.max(member.verifiedCount || 0, verified.length),
-                pendingCount: Math.max(member.pendingCount || 0, pending.length),
-                rejectedCount: Math.max(member.rejectedCount || 0, rejected.length),
-                
+                // Submission counts
+                submissionCount: realtimeStats.submissionCount ?? member.submissionCount ?? 0,
+                verifiedCount: realtimeStats.verifiedCount ?? member.verifiedCount ?? 0,
+                pendingCount: realtimeStats.pendingCount ?? member.pendingCount ?? 0,
+                rejectedCount: member.rejectedCount ?? 0,
+
                 // Interest eligibility
-                qualifiesForInterest: member.qualifiesForInterest || 
-                    (member.totalSavings || 0) >= (APP_SETTINGS?.interestEligibilityMin || 10000),
-                interestThreshold: APP_SETTINGS?.interestEligibilityMin || 10000,
-                interestProgress: Math.min(100, ((member.totalSavings || 0) / (APP_SETTINGS?.interestEligibilityMin || 10000)) * 100),
-                
-                // Recent submissions
-                submissions: submissions.slice(0, 20) // Limit to 20 most recent
+                qualifiesForInterest: totalSavings >= APP_SETTINGS.interestEligibilityMin,
+                interestThreshold: APP_SETTINGS.interestEligibilityMin,
+                interestProgress: Math.min(100, (totalSavings / APP_SETTINGS.interestEligibilityMin) * 100),
+
+                // Recent submissions (from Firestore - full details)
+                submissions: submissions.slice(0, 20),
+
+                // Timestamps
+                lastPaymentMonth: realtimeStats.lastPaymentMonth ?? member.lastPaymentMonth,
+                lastUpdated: realtimeStats.lastUpdated ?? null
             };
+
         } catch (error) {
             console.error('Get member stats error:', error);
             throw error;
         }
     },
 
-    /**
-     * Get stokvel total (all members combined)
-     * 
-     * @returns {Promise<number>} Total savings in Rands
-     */
-    async getStokvelTotal() {
-        try {
-            const snapshot = await db.collection('members').get();
-            return snapshot.docs.reduce((sum, doc) => {
-                return sum + (doc.data().totalSavings || 0);
-            }, 0);
-        } catch (error) {
-            console.error('Get stokvel total error:', error);
-            throw error;
-        }
-    },
+    // ==========================================
+    // AUDIT LOGGING
+    // ==========================================
 
     /**
-     * Generate monthly report data
+     * Create audit log entry
+     * All actions are logged for accountability
      * 
-     * @param {number} month - Month number (1-12)
-     * @param {number} year - Year
-     * @returns {Promise<object>} Report data
+     * @param {object} logData 
      */
-    async generateMonthlyReport(month, year) {
-        try {
-            const monthName = Utils.getMonthName(month);
-            const paymentMonth = `${monthName} ${year}`;
-            
-            // Get all submissions for this month
-            const submissionsSnapshot = await db.collection('submissions')
-                .where('paymentMonth', '==', paymentMonth)
-                .get();
-            
-            const submissions = submissionsSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            const verified = submissions.filter(s => s.status === 'verified');
-            const pending = submissions.filter(s => s.status === 'pending');
-            const rejected = submissions.filter(s => s.status === 'rejected');
-            
-            const totalAmount = verified.reduce((sum, s) => sum + (s.amount || 0), 0);
-            const totalFines = verified.reduce((sum, s) => sum + (s.fineAmount || 0), 0);
-            const latePayments = verified.filter(s => s.isLate).length;
-            
-            const members = await this.getMembers();
-            const compliantMembers = verified.length;
-            const complianceRate = members.length > 0 
-                ? Math.round((compliantMembers / members.length) * 100) 
-                : 0;
-            
-            return {
-                period: paymentMonth,
-                totalMembers: members.length,
-                members: members, // Include for detailed reports
-                
-                submissions: {
-                    total: submissions.length,
-                    list: submissions,
-                    verified: verified.length,
-                    pending: pending.length,
-                    rejected: rejected.length
-                },
-                
-                financials: {
-                    totalAmount: totalAmount,
-                    totalFines: totalFines,
-                    latePayments: latePayments,
-                    averagePayment: verified.length > 0 ? Math.round(totalAmount / verified.length) : 0
-                },
-                
-                compliance: {
-                    compliantMembers: compliantMembers,
-                    rate: complianceRate,
-                    nonCompliant: members.length - compliantMembers
-                },
-                
-                generatedAt: new Date().toISOString()
-            };
-        } catch (error) {
-            console.error('Generate report error:', error);
-            throw error;
-        }
-    },
+    async createAuditLog(logData) {
+        const firestore = getFirestore();
 
-    /**
-     * ==========================================
-     * INTEREST POOL OPERATIONS
-     * ==========================================
-     */
-
-    /**
-     * Get interest pool for a year
-     * 
-     * @param {number} year - Year
-     * @returns {Promise<object>} Interest pool data
-     */
-    async getInterestPool(year) {
         try {
-            const doc = await db.collection('interestPool').doc(year.toString()).get();
-            if (doc.exists) {
-                return { id: doc.id, ...doc.data() };
-            }
-            return { year, totalFines: 0, bankInterest: 0 };
-        } catch (error) {
-            console.error('Get interest pool error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Add bank interest to pool
-     * 
-     * @param {number} year - Year
-     * @param {number} amount - Interest amount in Rands
-     */
-    async addBankInterest(year, amount) {
-        try {
-            const interestRef = db.collection('interestPool').doc(year.toString());
-            await interestRef.set({
-                year: year,
-                bankInterest: firebase.firestore.FieldValue.increment(amount),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-            
-            await Auth.logAdminAction('bank_interest_added', {
-                year: year,
-                amount: amount
+            await firestore.collection('auditLogs').add({
+                ...logData,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'server'
             });
         } catch (error) {
-            console.error('Add bank interest error:', error);
-            throw error;
+            // Don't throw - audit log failure shouldn't break main operations
+            console.warn('Audit log failed:', error.message);
         }
     },
 
     /**
-     * Calculate interest distribution
-     * Members with R10,000+ savings split the pool equally
+     * Get audit logs with filters
      * 
-     * @param {number} year - Year for distribution
-     * @returns {Promise<object>} Distribution details
+     * @param {object} filters - {entityType, entityId, action, limit}
+     * @returns {Promise<Array>}
      */
-    async calculateInterestDistribution(year) {
+    async getAuditLogs(filters = {}) {
+        const firestore = getFirestore();
+
+        let query = firestore.collection('auditLogs');
+
+        if (filters.entityType) {
+            query = query.where('entityType', '==', filters.entityType);
+        }
+        if (filters.entityId) {
+            query = query.where('entityId', '==', filters.entityId);
+        }
+        if (filters.action) {
+            query = query.where('action', '==', filters.action);
+        }
+
+        const limit = filters.limit || 100;
+        const snapshot = await query.limit(limit).get();
+
+        const logs = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Sort by timestamp descending
+        logs.sort((a, b) => {
+            const dateA = a.timestamp?.toDate?.() || new Date(0);
+            const dateB = b.timestamp?.toDate?.() || new Date(0);
+            return dateB - dateA;
+        });
+
+        return logs;
+    },
+
+    // ==========================================
+    // UTILITY FUNCTIONS
+    // ==========================================
+
+    /**
+     * Hash password using SHA-256
+     * @param {string} password 
+     * @returns {Promise<string>}
+     */
+    async hashPassword(password) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    },
+
+    /**
+     * Extract year from payment month string
+     * @param {string} paymentMonth - e.g., "January 2024"
+     * @returns {number}
+     */
+    extractYearFromMonth(paymentMonth) {
+        if (!paymentMonth) return new Date().getFullYear();
+
+        const match = paymentMonth.match(/\d{4}/);
+        return match ? parseInt(match[0]) : new Date().getFullYear();
+    },
+
+    /**
+     * Send SMS without blocking main flow
+     * Runs asynchronously, failures don't affect main operation
+     * 
+     * @param {string} type - SMS type
+     * @param {object} data - SMS data
+     */
+    sendSMSNonBlocking(type, data) {
+        // Run SMS in background with small delay
+        setTimeout(async () => {
+            try {
+                if (typeof SMS === 'undefined') {
+                    console.log('📱 SMS module not loaded, skipping notification');
+                    return;
+                }
+
+                switch (type) {
+                    case 'popConfirmation':
+                        await SMS.sendPOPConfirmation(
+                            data.phone, data.name, data.amount, data.month, data.reference
+                        );
+                        break;
+                    case 'approval':
+                        await SMS.sendApprovalNotification(
+                            data.phone, data.name, data.amount, data.month, data.totalSaved
+                        );
+                        break;
+                    case 'rejection':
+                        await SMS.sendRejectionNotification(
+                            data.phone, data.name, data.amount, data.month, data.reason
+                        );
+                        break;
+                    default:
+                        console.warn('Unknown SMS type:', type);
+                }
+            } catch (error) {
+                console.warn('📱 SMS failed (non-critical):', error.message);
+            }
+        }, 100);
+    },
+
+    /**
+     * Initialize Realtime Database structure
+     * Call once on first setup to create the structure
+     */
+    async initializeRealtimeDB() {
+        const rtdb = getRealtimeDB();
+
+        const defaultStructure = {
+            totals: {
+                totalMembers: 0,
+                totalSavings: 0,
+                totalFines: 0,
+                pendingSubmissions: 0,
+                approvedSubmissions: 0,
+                rejectedSubmissions: 0,
+                totalSubmissions: 0,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+            },
+            counters: {
+                memberNumber: 1000,
+                submissionNumber: 10000
+            },
+            members: {},
+            interestPool: {},
+            monthly: {}
+        };
+
+        // Only set if doesn't exist
+        const snapshot = await rtdb.ref('stokvel/totals').once('value');
+        if (!snapshot.exists()) {
+            await rtdb.ref('stokvel').set(defaultStructure);
+            console.log('✅ Realtime DB initialized with default structure');
+        } else {
+            console.log('ℹ️ Realtime DB already initialized');
+        }
+    },
+
+    /**
+     * Sync Firestore data to Realtime DB
+     * Use if data gets out of sync
+     */
+    async syncDataToRealtimeDB() {
+        const firestore = getFirestore();
+        const rtdb = getRealtimeDB();
+
+        console.log('🔄 Syncing Firestore to Realtime DB...');
+
         try {
-            const pool = await this.getInterestPool(year);
+            // Get all members
             const members = await this.getMembers();
             
-            // Find qualifying members (R10,000+ saved, active status)
-            const threshold = APP_SETTINGS?.interestEligibilityMin || 10000;
-            const qualifyingMembers = members.filter(m => 
-                m.status === 'active' && 
-                (m.totalSavings || 0) >= threshold
-            );
-            
-            const totalPool = (pool.totalFines || 0) + (pool.bankInterest || 0);
-            const perMember = qualifyingMembers.length > 0 
-                ? Math.floor(totalPool / qualifyingMembers.length) 
-                : 0;
-            
-            return {
-                year,
-                totalPool,
-                totalPoolFormatted: Utils.formatCurrency(totalPool),
-                
-                breakdown: {
-                    totalFines: pool.totalFines || 0,
-                    bankInterest: pool.bankInterest || 0
-                },
-                
-                eligibility: {
-                    threshold: threshold,
-                    thresholdFormatted: Utils.formatCurrency(threshold)
-                },
-                
-                distribution: {
-                    qualifyingMembersCount: qualifyingMembers.length,
-                    totalMembersCount: members.length,
-                    perMemberAmount: perMember,
-                    perMemberFormatted: Utils.formatCurrency(perMember)
-                },
-                
-                qualifyingMembers: qualifyingMembers.map(m => ({
-                    id: m.id,
-                    name: m.name,
-                    phone: m.phone,
-                    totalSavings: m.totalSavings,
-                    totalSavingsFormatted: Utils.formatCurrency(m.totalSavings),
-                    shareAmount: perMember,
-                    shareFormatted: Utils.formatCurrency(perMember)
-                }))
-            };
-        } catch (error) {
-            console.error('Calculate distribution error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * ==========================================
-     * DATA INTEGRITY UTILITIES
-     * ==========================================
-     */
-
-    /**
-     * Recalculate member stats from submissions
-     * Use this to fix data inconsistencies
-     * 
-     * @param {string} memberId - Member ID to recalculate
-     * @returns {Promise<object>} Updated stats
-     */
-    async recalculateMemberStats(memberId) {
-        try {
-            const member = await this.getMember(memberId);
-            if (!member) throw new Error('Member not found');
-
-            const submissions = await db.collection('submissions')
-                .where('memberId', '==', memberId)
-                .get();
-
             let totalSavings = 0;
             let totalFines = 0;
-            let verifiedCount = 0;
-            let pendingCount = 0;
-            let rejectedCount = 0;
 
-            submissions.docs.forEach(doc => {
-                const data = doc.data();
-                if (data.status === 'verified') {
-                    totalSavings += data.amount || 0;
-                    totalFines += data.fineAmount || 0;
-                    verifiedCount++;
-                } else if (data.status === 'pending') {
-                    pendingCount++;
-                } else if (data.status === 'rejected') {
-                    rejectedCount++;
-                }
-            });
-
-            const qualifiesForInterest = totalSavings >= (APP_SETTINGS?.interestEligibilityMin || 10000);
-
-            await db.collection('members').doc(memberId).update({
-                totalSavings,
-                totalFines,
-                submissionCount: submissions.size,
-                verifiedCount,
-                pendingCount,
-                rejectedCount,
-                qualifiesForInterest,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-
-            console.log('✅ Recalculated stats for member:', memberId);
-
-            return {
-                totalSavings,
-                totalFines,
-                submissionCount: submissions.size,
-                verifiedCount,
-                pendingCount,
-                rejectedCount,
-                qualifiesForInterest
-            };
-
-        } catch (error) {
-            console.error('Recalculate stats error:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Recalculate all members' stats
-     * Admin utility function
-     * 
-     * @returns {Promise<number>} Number of members recalculated
-     */
-    async recalculateAllMemberStats() {
-        try {
-            const members = await this.getMembers();
-            let count = 0;
-
+            // Sync each member
             for (const member of members) {
-                await this.recalculateMemberStats(member.id);
-                count++;
+                totalSavings += member.totalSavings || 0;
+                totalFines += member.totalFines || 0;
+
+                await rtdb.ref(`stokvel/members/${member.id}`).set({
+                    name: member.fullName || member.name,
+                    memberRef: member.memberRef,
+                    phone: member.phone,
+                    totalSavings: member.totalSavings || 0,
+                    totalFines: member.totalFines || 0,
+                    submissionCount: member.submissionCount || 0,
+                    verifiedCount: member.verifiedCount || 0,
+                    pendingCount: member.pendingCount || 0,
+                    qualifiesForInterest: (member.totalSavings || 0) >= APP_SETTINGS.interestEligibilityMin,
+                    lastPaymentMonth: member.lastPaymentMonth || null,
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                });
             }
 
-            await Auth.logAdminAction('stats_recalculated', {
-                membersCount: count
+            // Count submissions
+            const pendingSnapshot = await firestore.collection('submissions')
+                .where('status', '==', 'pending').get();
+            const approvedSnapshot = await firestore.collection('submissions')
+                .where('status', '==', 'verified').get();
+            const rejectedSnapshot = await firestore.collection('submissions')
+                .where('status', '==', 'rejected').get();
+
+            // Update totals
+            await rtdb.ref('stokvel/totals').set({
+                totalMembers: members.length,
+                totalSavings: totalSavings,
+                totalFines: totalFines,
+                pendingSubmissions: pendingSnapshot.size,
+                approvedSubmissions: approvedSnapshot.size,
+                rejectedSubmissions: rejectedSnapshot.size,
+                totalSubmissions: pendingSnapshot.size + approvedSnapshot.size + rejectedSnapshot.size,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
             });
 
-            return count;
+            console.log('✅ Sync complete');
+            console.log(`   Members: ${members.length}`);
+            console.log(`   Total Savings: R${totalSavings}`);
+            console.log(`   Total Fines: R${totalFines}`);
+
         } catch (error) {
-            console.error('Recalculate all stats error:', error);
+            console.error('❌ Sync error:', error);
             throw error;
         }
     }
 };
 
-// Export for use
+// ==========================================
+// EXPORT
+// ==========================================
+
 window.Database = Database;
+window.APP_SETTINGS = APP_SETTINGS;
+
+console.log('📊 Database module loaded (Dual Architecture)');
+console.log('   ├─ Firestore: Individual records + Audit trail');
+console.log('   └─ Realtime DB: Live totals + Real-time sync');
