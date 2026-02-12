@@ -40,8 +40,8 @@ const Auth = {
    */
   ADMIN_CODES: {
     VIC2026: { role: "chairperson", name: "Chairperson", level: 3 },
-    KAT2026: { role: "secretary", name: "Secretary", level: 3 },
-    MBA2026: { role: "treasurer", name: "Treasurer", level: 3 },
+    KAT2026: { role: "secretary", name: "Secretary", level: 2 },
+    MBA2026: { role: "treasurer", name: "Treasurer", level: 2 },
   },
 
   // Current Firebase user reference
@@ -247,6 +247,8 @@ const Auth = {
       throw error;
     }
   },
+
+  
 
   /**
    * ==========================================

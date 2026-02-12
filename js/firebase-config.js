@@ -42,7 +42,7 @@ const APP_SETTINGS = {
     interestEligibilityMin: 10000,
     bankingDetails: {
         bankName: "FNB",
-        accountName: "Tshikota Ro Farana",
+        accountName: "Stokvel",
         accountNumber: "63190192880",
         branchCode: "250655",
         reference: "Name + Month"

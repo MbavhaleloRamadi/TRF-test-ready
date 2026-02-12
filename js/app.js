@@ -16,17 +16,32 @@ const App = {
   /**
    * Initialize the app
    */
-  init() {
+  async init() {
     console.log("🚀 Tshikota Ro Farana App Initialized");
 
-    // Initialize auth if not already done
     this.initAuth();
-
-    // Set up global error handling
     this.setupErrorHandling();
-
-    // Initialize toast container if not present
     this.initToastContainer();
+
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const urlAdminCode = params.get("adminCode");
+
+      if (urlAdminCode) {
+        const result = await Auth.verifyAdminCode(urlAdminCode);
+        if (result) {
+          this.showAdminDashboard();
+          return;
+        }
+      }
+
+      const hasSession = await Auth.checkAdminSession();
+      if (hasSession) {
+        this.showAdminDashboard();
+      }
+    } catch (error) {
+      console.warn("Admin session check failed:", error);
+    }
   },
 
   /**
@@ -66,6 +81,20 @@ const App = {
       container.className = "toast-container";
       document.body.appendChild(container);
     }
+  },
+
+  showAdminDashboard() {
+    const dashboardEl = document.getElementById("adminDashboard");
+    if (dashboardEl) dashboardEl.style.display = "block";
+
+    const memberSection = document.getElementById("member-section");
+    if (memberSection) memberSection.style.display = "none";
+
+    console.log("🟢 Admin dashboard displayed");
+
+    // Optionally hide the login form
+    const loginForm = document.getElementById("adminLogin");
+    if (loginForm) loginForm.style.display = "none";
   },
 
   /**
