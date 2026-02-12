@@ -205,7 +205,10 @@ const ViewAccount = (() => {
             console.log('🔐 Attempting login...');
             
             // Authenticate via Database
-            const result = await Database.authenticateMember(phone, password);
+            const member = await Database.verifyMemberLogin(phone, password);
+            const result = member 
+                ? { success: true, member: member }
+                : { success: false, error: 'Invalid phone number or password' };
             
             if (result.success) {
                 currentMember = result.member;
