@@ -302,12 +302,23 @@ const SubmitPOP = (() => {
         // Create preview URL
         previewURL = Storage.createPreviewURL(file);
 
-        // Update preview UI
+        // Update preview UI based on file type
         if (file.type.startsWith('image/')) {
+            // Image preview
             previewImage.src = previewURL;
             previewImage.style.display = 'block';
+        } else if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+            // PDF icon preview
+            previewImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
+                <svg width="100" height="100" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#E53935" stroke="#B71C1C" stroke-width="1"/>
+                    <polyline points="14 2 14 8 20 8" fill="#FFCDD2" stroke="#B71C1C" stroke-width="1"/>
+                    <text x="12" y="16" font-size="5" fill="white" text-anchor="middle" font-weight="bold">PDF</text>
+                </svg>
+            `);
+            previewImage.style.display = 'block';
         } else {
-            // Non-image file - show icon
+            // Generic file icon
             previewImage.src = 'data:image/svg+xml,' + encodeURIComponent(`
                 <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
