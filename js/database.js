@@ -36,12 +36,13 @@
 // ==========================================
 // CONFIGURATION CONSTANTS
 // ==========================================
-
-const APP_SETTINGS = {
-    minimumContribution: 300,      // R300 minimum per month
-    lateFee: 50,                   // R50 late fee
-    paymentDeadlineDay: 7,         // Due by 7th of month
-    interestEligibilityMin: 10000, // R10,000 for interest
+// APP_SETTINGS is defined in firebase-config.js
+// Using window.APP_SETTINGS for fallback
+const DB_SETTINGS = window.APP_SETTINGS || {
+    minimumContribution: 300,
+    lateFee: 50,
+    paymentDeadlineDay: 7,
+    interestEligibilityMin: 10000,
     currency: 'ZAR',
     currencySymbol: 'R'
 };
@@ -1437,7 +1438,6 @@ const Database = {
 // ==========================================
 
 window.Database = Database;
-window.APP_SETTINGS = APP_SETTINGS;
 
 console.log('📊 Database module loaded (Dual Architecture)');
 console.log('   ├─ Firestore: Individual records + Audit trail');
