@@ -1,609 +1,776 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Next of Kin Details - Tshikota Ro Farana Stokvel Registration">
-    <meta name="theme-color" content="#1B5E20">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Next of Kin Details - Tshikota Ro Farana Stokvel Registration"
+    />
+    <meta name="theme-color" content="#1B5E20" />
     <title>Next of Kin - Tshikota Ro Farana Stokvel</title>
-    
+
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/components.css">
-    
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/components.css" />
+
     <style>
-        /* Registration-specific styles */
-        .register-hero {
-            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #388E3C 100%);
-            color: white;
-            padding: 2rem 1rem;
-            text-align: center;
-        }
-        
-        .register-hero-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.3);
-            margin-bottom: 1rem;
-        }
-        
-        .register-hero h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.75rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .register-hero p {
-            opacity: 0.9;
-            font-size: 0.95rem;
-        }
-        
-        .progress-steps {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-            padding: 0 1rem;
-        }
-        
-        .progress-step {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            opacity: 0.6;
-        }
-        
-        .progress-step.active {
-            opacity: 1;
-        }
-        
-        .progress-step.completed {
-            opacity: 0.8;
-        }
-        
-        .step-number {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 0.8rem;
-        }
-        
-        .progress-step.active .step-number {
-            background: white;
-            color: #1B5E20;
-        }
-        
-        .progress-step.completed .step-number {
-            background: #81C784;
-        }
-        
-        .step-connector {
-            width: 30px;
-            height: 2px;
-            background: rgba(255,255,255,0.3);
-        }
-        
-        .step-connector.completed {
-            background: #81C784;
-        }
-        
-        .register-form {
-            padding: 1.5rem;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .form-section {
-            margin-bottom: 2rem;
-            padding: 1.25rem;
-            background: #FAFAFA;
-            border-radius: 12px;
-            border: 1px solid #E0E0E0;
-        }
-        
-        .form-section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-        
-        .form-section-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #1B5E20;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .section-badge {
-            background: #1B5E20;
-            color: white;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            text-transform: uppercase;
-        }
-        
-        .section-badge.optional {
-            background: #9E9E9E;
-        }
-        
-        .form-section-description {
-            font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 1rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px dashed #DDD;
-        }
-        
-        .kin-info {
-            background: #E8F5E9;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.9rem;
-            color: #2E7D32;
-        }
-        
-        .kin-info h3 {
-            font-size: 1rem;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        
-        .kin-info ul {
-            margin: 0.5rem 0 0 1.25rem;
-            padding: 0;
-        }
-        
-        .kin-info li {
-            margin-bottom: 0.25rem;
-        }
-        
-        .relationship-options {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-        }
-        
-        .relationship-option {
-            padding: 0.75rem;
-            border: 2px solid #E0E0E0;
-            border-radius: 8px;
-            cursor: pointer;
-            text-align: center;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            background: white;
-        }
-        
-        .relationship-option:hover {
-            border-color: #81C784;
-            background: #F1F8E9;
-        }
-        
-        .relationship-option.selected {
-            border-color: #1B5E20;
-            background: #E8F5E9;
-            color: #1B5E20;
-            font-weight: 500;
-        }
-        
-        .relationship-option input {
-            display: none;
-        }
-        
-        .btn-row {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-        
-        .btn-row .btn {
-            flex: 1;
-        }
-        
-        .member-summary {
-            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-        
-        .member-summary-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: #1B5E20;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: 1.25rem;
-        }
-        
-        .member-summary-info h3 {
-            font-size: 1rem;
-            margin: 0 0 0.25rem 0;
-            color: #1B5E20;
-        }
-        
-        .member-summary-info p {
-            font-size: 0.85rem;
-            margin: 0;
-            color: #555;
-        }
+      /* Registration-specific styles */
+      .register-hero {
+        background: linear-gradient(
+          135deg,
+          #1b5e20 0%,
+          #2e7d32 50%,
+          #388e3c 100%
+        );
+        color: white;
+        padding: 2rem 1rem;
+        text-align: center;
+      }
+
+      .register-hero-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1rem;
+      }
+
+      .register-hero h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .register-hero p {
+        opacity: 0.9;
+        font-size: 0.95rem;
+      }
+
+      .progress-steps {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        padding: 0 1rem;
+      }
+
+      .progress-step {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        opacity: 0.6;
+      }
+
+      .progress-step.active {
+        opacity: 1;
+      }
+
+      .progress-step.completed {
+        opacity: 0.8;
+      }
+
+      .step-number {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.8rem;
+      }
+
+      .progress-step.active .step-number {
+        background: white;
+        color: #1b5e20;
+      }
+
+      .progress-step.completed .step-number {
+        background: #81c784;
+      }
+
+      .step-connector {
+        width: 30px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .step-connector.completed {
+        background: #81c784;
+      }
+
+      .register-form {
+        padding: 1.5rem;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .form-section {
+        margin-bottom: 2rem;
+        padding: 1.25rem;
+        background: #fafafa;
+        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .form-section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+
+      .form-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #1b5e20;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .section-badge {
+        background: #1b5e20;
+        color: white;
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+      }
+
+      .section-badge.optional {
+        background: #9e9e9e;
+      }
+
+      .form-section-description {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed #ddd;
+      }
+
+      .kin-info {
+        background: #e8f5e9;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #2e7d32;
+      }
+
+      .kin-info h3 {
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .kin-info ul {
+        margin: 0.5rem 0 0 1.25rem;
+        padding: 0;
+      }
+
+      .kin-info li {
+        margin-bottom: 0.25rem;
+      }
+
+      .relationship-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+
+      .relationship-option {
+        padding: 0.75rem;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        background: white;
+      }
+
+      .relationship-option:hover {
+        border-color: #81c784;
+        background: #f1f8e9;
+      }
+
+      .relationship-option.selected {
+        border-color: #1b5e20;
+        background: #e8f5e9;
+        color: #1b5e20;
+        font-weight: 500;
+      }
+
+      .relationship-option input {
+        display: none;
+      }
+
+      .btn-row {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+      }
+
+      .btn-row .btn {
+        flex: 1;
+      }
+
+      .member-summary {
+        background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .member-summary-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #1b5e20;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.25rem;
+      }
+
+      .member-summary-info h3 {
+        font-size: 1rem;
+        margin: 0 0 0.25rem 0;
+        color: #1b5e20;
+      }
+
+      .member-summary-info p {
+        font-size: 0.85rem;
+        margin: 0;
+        color: #555;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Hero Section -->
     <section class="register-hero">
-        <img src="assets/logo/logo.tshikota.jpeg" alt="Tshikota Ro Farana Logo" class="register-hero-logo" onerror="this.style.display='none'">
-        <h1>Next of Kin Details</h1>
-        <p>Emergency contacts for your account</p>
-        
-        <!-- Progress Steps -->
-        <div class="progress-steps">
-            <div class="progress-step completed">
-                <span class="step-number">✓</span>
-                <span>Your Details</span>
-            </div>
-            <div class="step-connector completed"></div>
-            <div class="progress-step active">
-                <span class="step-number">2</span>
-                <span>Next of Kin</span>
-            </div>
-            <div class="step-connector"></div>
-            <div class="progress-step">
-                <span class="step-number">3</span>
-                <span>Complete</span>
-            </div>
+      <img
+        src="assets/logo/logo.tshikota.jpeg"
+        alt="Tshikota Ro Farana Logo"
+        class="register-hero-logo"
+        onerror="this.style.display = 'none'"
+      />
+      <h1>Next of Kin Details</h1>
+      <p>Emergency contacts for your account</p>
+
+      <!-- Progress Steps -->
+      <div class="progress-steps">
+        <div class="progress-step completed">
+          <span class="step-number">✓</span>
+          <span>Your Details</span>
         </div>
+        <div class="step-connector completed"></div>
+        <div class="progress-step active">
+          <span class="step-number">2</span>
+          <span>Next of Kin</span>
+        </div>
+        <div class="step-connector"></div>
+        <div class="progress-step">
+          <span class="step-number">3</span>
+          <span>Complete</span>
+        </div>
+      </div>
     </section>
 
     <!-- Registration Form -->
     <main class="register-form">
-        <!-- Member Summary -->
-        <div class="member-summary">
-            <div class="member-summary-avatar" id="memberAvatar">--</div>
-            <div class="member-summary-info">
-                <h3 id="memberName">Loading...</h3>
-                <p id="memberPhone">Ref: ---</p>
-            </div>
+      <!-- Member Summary -->
+      <div class="member-summary">
+        <div class="member-summary-avatar" id="memberAvatar">--</div>
+        <div class="member-summary-info">
+          <h3 id="memberName">Loading...</h3>
+          <p id="memberPhone">Ref: ---</p>
         </div>
+      </div>
 
-        <!-- Info Box -->
-        <div class="kin-info">
-            <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M12 16v-4M12 8h.01"/>
-                </svg>
-                Why we need this
-            </h3>
-            <p>In case of emergency or if we cannot reach you, your next of kin will be contacted regarding your stokvel account.</p>
-            <ul>
-                <li>Primary and Secondary contacts are required</li>
-                <li>Third contact is optional</li>
-                <li>Information is kept strictly confidential</li>
-            </ul>
-        </div>
+      <!-- Info Box -->
+      <div class="kin-info">
+        <h3>
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          Why we need this
+        </h3>
+        <p>
+          In case of emergency or if we cannot reach you, your next of kin will
+          be contacted regarding your stokvel account.
+        </p>
+        <ul>
+          <li>Primary and Secondary contacts are required</li>
+          <li>Third contact is optional</li>
+          <li>Information is kept strictly confidential</li>
+        </ul>
+      </div>
 
-        <form id="kinForm" novalidate>
-            
-            <!-- Primary Next of Kin (Required) -->
-            <section class="form-section">
-                <div class="form-section-header">
-                    <h2 class="form-section-title">
-                        <span>Primary Contact</span>
-                        <span class="section-badge">Required</span>
-                    </h2>
-                </div>
-                <p class="form-section-description">First person to contact in case of emergency</p>
-                
-                <div class="form-group">
-                    <label for="primary_name" class="form-label">Full Name <span class="required">*</span></label>
-                    <input 
-                        type="text" 
-                        id="primary_name" 
-                        name="primary_name" 
-                        class="form-input" 
-                        placeholder="Enter full name"
-                        required
-                    >
-                    <span class="form-error"></span>
-                </div>
+      <form id="kinForm" novalidate>
+        <!-- Primary Next of Kin (Required) -->
+        <section class="form-section">
+          <div class="form-section-header">
+            <h2 class="form-section-title">
+              <span>Primary Contact</span>
+              <span class="section-badge">Required</span>
+            </h2>
+          </div>
+          <p class="form-section-description">
+            First person to contact in case of emergency
+          </p>
 
-                <div class="form-group">
-                    <label class="form-label">Relationship <span class="required">*</span></label>
-                    <div class="relationship-options">
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Spouse" required>
-                            Spouse
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Parent">
-                            Parent
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Sibling">
-                            Sibling
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Child">
-                            Child
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Friend">
-                            Friend
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="primary_relationship" value="Other">
-                            Other
-                        </label>
-                    </div>
-                    <span class="form-error" id="primary_relationship_error"></span>
-                </div>
+          <div class="form-group">
+            <label for="primary_name" class="form-label"
+              >Full Name <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="primary_name"
+              name="primary_name"
+              class="form-input"
+              placeholder="Enter full name"
+              required
+            />
+            <span class="form-error"></span>
+          </div>
 
-                <div class="form-group">
-                    <label for="primary_phone" class="form-label">Phone Number <span class="required">*</span></label>
-                    <input 
-                        type="tel" 
-                        id="primary_phone" 
-                        name="primary_phone" 
-                        class="form-input" 
-                        placeholder="e.g., 0821234567"
-                        required
-                        maxlength="10"
-                        inputmode="numeric"
-                    >
-                    <span class="form-error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="primary_email" class="form-label">Email <span class="optional">(Optional)</span></label>
-                    <input 
-                        type="email" 
-                        id="primary_email" 
-                        name="primary_email" 
-                        class="form-input" 
-                        placeholder="their@email.com"
-                    >
-                    <span class="form-error"></span>
-                </div>
-            </section>
-
-            <!-- Secondary Next of Kin (Required) -->
-            <section class="form-section">
-                <div class="form-section-header">
-                    <h2 class="form-section-title">
-                        <span>Secondary Contact</span>
-                        <span class="section-badge">Required</span>
-                    </h2>
-                </div>
-                <p class="form-section-description">Backup contact if primary is unavailable</p>
-                
-                <div class="form-group">
-                    <label for="secondary_name" class="form-label">Full Name <span class="required">*</span></label>
-                    <input 
-                        type="text" 
-                        id="secondary_name" 
-                        name="secondary_name" 
-                        class="form-input" 
-                        placeholder="Enter full name"
-                        required
-                    >
-                    <span class="form-error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Relationship <span class="required">*</span></label>
-                    <div class="relationship-options">
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Spouse" required>
-                            Spouse
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Parent">
-                            Parent
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Sibling">
-                            Sibling
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Child">
-                            Child
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Friend">
-                            Friend
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="secondary_relationship" value="Other">
-                            Other
-                        </label>
-                    </div>
-                    <span class="form-error" id="secondary_relationship_error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="secondary_phone" class="form-label">Phone Number <span class="required">*</span></label>
-                    <input 
-                        type="tel" 
-                        id="secondary_phone" 
-                        name="secondary_phone" 
-                        class="form-input" 
-                        placeholder="e.g., 0821234567"
-                        required
-                        maxlength="10"
-                        inputmode="numeric"
-                    >
-                    <span class="form-error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="secondary_email" class="form-label">Email <span class="optional">(Optional)</span></label>
-                    <input 
-                        type="email" 
-                        id="secondary_email" 
-                        name="secondary_email" 
-                        class="form-input" 
-                        placeholder="their@email.com"
-                    >
-                    <span class="form-error"></span>
-                </div>
-            </section>
-
-            <!-- Tertiary Next of Kin (Optional) -->
-            <section class="form-section">
-                <div class="form-section-header">
-                    <h2 class="form-section-title">
-                        <span>Third Contact</span>
-                        <span class="section-badge optional">Optional</span>
-                    </h2>
-                </div>
-                <p class="form-section-description">Additional emergency contact (you can skip this)</p>
-                
-                <div class="form-group">
-                    <label for="tertiary_name" class="form-label">Full Name</label>
-                    <input 
-                        type="text" 
-                        id="tertiary_name" 
-                        name="tertiary_name" 
-                        class="form-input" 
-                        placeholder="Enter full name (optional)"
-                    >
-                    <span class="form-error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Relationship</label>
-                    <div class="relationship-options">
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Spouse">
-                            Spouse
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Parent">
-                            Parent
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Sibling">
-                            Sibling
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Child">
-                            Child
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Friend">
-                            Friend
-                        </label>
-                        <label class="relationship-option">
-                            <input type="radio" name="tertiary_relationship" value="Other">
-                            Other
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="tertiary_phone" class="form-label">Phone Number</label>
-                    <input 
-                        type="tel" 
-                        id="tertiary_phone" 
-                        name="tertiary_phone" 
-                        class="form-input" 
-                        placeholder="e.g., 0821234567"
-                        maxlength="10"
-                        inputmode="numeric"
-                    >
-                    <span class="form-error"></span>
-                </div>
-
-                <div class="form-group">
-                    <label for="tertiary_email" class="form-label">Email</label>
-                    <input 
-                        type="email" 
-                        id="tertiary_email" 
-                        name="tertiary_email" 
-                        class="form-input" 
-                        placeholder="their@email.com"
-                    >
-                    <span class="form-error"></span>
-                </div>
-            </section>
-
-            <!-- Submit Buttons -->
-            <div class="btn-row">
-                <button type="button" class="btn btn-ghost" id="backBtn">
-                    ← Back
-                </button>
-                <button type="submit" class="btn btn-primary" id="submitBtn">
-                    <span class="btn-text">Complete Registration</span>
-                    <span class="btn-loading" style="display: none;">
-                        <span class="spinner"></span>
-                        Saving...
-                    </span>
-                </button>
+          <div class="form-group">
+            <label class="form-label"
+              >Relationship <span class="required">*</span></label
+            >
+            <div class="relationship-options">
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="primary_relationship"
+                  value="Spouse"
+                  required
+                />
+                Spouse
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="primary_relationship"
+                  value="Parent"
+                />
+                Parent
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="primary_relationship"
+                  value="Sibling"
+                />
+                Sibling
+              </label>
+              <label class="relationship-option">
+                <input type="radio" name="primary_relationship" value="Child" />
+                Child
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="primary_relationship"
+                  value="Friend"
+                />
+                Friend
+              </label>
+              <label class="relationship-option">
+                <input type="radio" name="primary_relationship" value="Other" />
+                Other
+              </label>
             </div>
-        </form>
+            <span class="form-error" id="primary_relationship_error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="primary_phone" class="form-label"
+              >Phone Number <span class="required">*</span></label
+            >
+            <input
+              type="tel"
+              id="primary_phone"
+              name="primary_phone"
+              class="form-input"
+              placeholder="e.g., 0821234567"
+              required
+              maxlength="10"
+              inputmode="numeric"
+            />
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="primary_email" class="form-label"
+              >Email <span class="optional">(Optional)</span></label
+            >
+            <input
+              type="email"
+              id="primary_email"
+              name="primary_email"
+              class="form-input"
+              placeholder="their@email.com"
+            />
+            <span class="form-error"></span>
+          </div>
+        </section>
+
+        <!-- Secondary Next of Kin (Required) -->
+        <section class="form-section">
+          <div class="form-section-header">
+            <h2 class="form-section-title">
+              <span>Secondary Contact</span>
+              <span class="section-badge">Required</span>
+            </h2>
+          </div>
+          <p class="form-section-description">
+            Backup contact if primary is unavailable
+          </p>
+
+          <div class="form-group">
+            <label for="secondary_name" class="form-label"
+              >Full Name <span class="required">*</span></label
+            >
+            <input
+              type="text"
+              id="secondary_name"
+              name="secondary_name"
+              class="form-input"
+              placeholder="Enter full name"
+              required
+            />
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label"
+              >Relationship <span class="required">*</span></label
+            >
+            <div class="relationship-options">
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Spouse"
+                  required
+                />
+                Spouse
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Parent"
+                />
+                Parent
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Sibling"
+                />
+                Sibling
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Child"
+                />
+                Child
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Friend"
+                />
+                Friend
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="secondary_relationship"
+                  value="Other"
+                />
+                Other
+              </label>
+            </div>
+            <span class="form-error" id="secondary_relationship_error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="secondary_phone" class="form-label"
+              >Phone Number <span class="required">*</span></label
+            >
+            <input
+              type="tel"
+              id="secondary_phone"
+              name="secondary_phone"
+              class="form-input"
+              placeholder="e.g., 0821234567"
+              required
+              maxlength="10"
+              inputmode="numeric"
+            />
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="secondary_email" class="form-label"
+              >Email <span class="optional">(Optional)</span></label
+            >
+            <input
+              type="email"
+              id="secondary_email"
+              name="secondary_email"
+              class="form-input"
+              placeholder="their@email.com"
+            />
+            <span class="form-error"></span>
+          </div>
+        </section>
+
+        <!-- Tertiary Next of Kin (Optional) -->
+        <section class="form-section">
+          <div class="form-section-header">
+            <h2 class="form-section-title">
+              <span>Third Contact</span>
+              <span class="section-badge optional">Optional</span>
+            </h2>
+          </div>
+          <p class="form-section-description">
+            Additional emergency contact (you can skip this)
+          </p>
+
+          <div class="form-group">
+            <label for="tertiary_name" class="form-label">Full Name</label>
+            <input
+              type="text"
+              id="tertiary_name"
+              name="tertiary_name"
+              class="form-input"
+              placeholder="Enter full name (optional)"
+            />
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Relationship</label>
+            <div class="relationship-options">
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Spouse"
+                />
+                Spouse
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Parent"
+                />
+                Parent
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Sibling"
+                />
+                Sibling
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Child"
+                />
+                Child
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Friend"
+                />
+                Friend
+              </label>
+              <label class="relationship-option">
+                <input
+                  type="radio"
+                  name="tertiary_relationship"
+                  value="Other"
+                />
+                Other
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tertiary_phone" class="form-label">Phone Number</label>
+            <input
+              type="tel"
+              id="tertiary_phone"
+              name="tertiary_phone"
+              class="form-input"
+              placeholder="e.g., 0821234567"
+              maxlength="10"
+              inputmode="numeric"
+            />
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="tertiary_email" class="form-label">Email</label>
+            <input
+              type="email"
+              id="tertiary_email"
+              name="tertiary_email"
+              class="form-input"
+              placeholder="their@email.com"
+            />
+            <span class="form-error"></span>
+          </div>
+        </section>
+
+        <!-- Submit Buttons -->
+        <div class="btn-row">
+          <button type="button" class="btn btn-ghost" id="backBtn">
+            ← Back
+          </button>
+          <button type="submit" class="btn btn-primary" id="submitBtn">
+            <span class="btn-text">Complete Registration</span>
+            <span class="btn-loading" style="display: none">
+              <span class="spinner"></span>
+              Saving...
+            </span>
+          </button>
+        </div>
+      </form>
     </main>
 
     <!-- Success Modal -->
     <div class="modal" id="successModal">
-        <div class="modal-backdrop"></div>
-        <div class="modal-container">
-            <div class="modal-content" style="text-align: center; padding: 2rem;">
-                <div class="modal-icon success" style="width: 80px; height: 80px; margin: 0 auto 1.5rem;">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                </div>
-                <h2 class="modal-title" style="color: #1B5E20;">Registration Complete!</h2>
-                <p class="modal-message">Welcome to Tshikota Ro Farana Stokvel. A confirmation SMS has been sent to your phone.</p>
-                
-                <div class="reference-box" style="background: #E8F5E9; border-radius: 8px; padding: 1rem; margin: 1.5rem 0;">
-                    <span class="reference-label" style="display: block; font-size: 0.8rem; color: #666;">Your Member Reference</span>
-                    <span class="reference-value" id="memberRefDisplay" style="display: block; font-size: 1.5rem; font-weight: 700; color: #1B5E20;">TRF-MXXXX</span>
-                </div>
-                
-                <div style="background: #FFF8E1; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; text-align: left;">
-                    <strong style="color: #F57C00;">What's Next?</strong>
-                    <ul style="margin: 0.5rem 0 0 1rem; padding: 0; color: #666; font-size: 0.9rem;">
-                        <li>Save your member reference</li>
-                        <li>Make your first R300+ contribution</li>
-                        <li>Submit proof of payment</li>
-                    </ul>
-                </div>
-                
-                <button class="btn btn-primary btn-block" id="goToAccountBtn">
-                    Go to My Account
-                </button>
-            </div>
+      <div class="modal-backdrop"></div>
+      <div class="modal-container">
+        <div class="modal-content" style="text-align: center; padding: 2rem">
+          <div
+            class="modal-icon success"
+            style="width: 80px; height: 80px; margin: 0 auto 1.5rem"
+          >
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h2 class="modal-title" style="color: #1b5e20">
+            Registration Complete!
+          </h2>
+          <p class="modal-message">
+            Welcome to Tshikota Ro Farana Stokvel. A confirmation SMS has been
+            sent to your phone.
+          </p>
+
+          <div
+            class="reference-box"
+            style="
+              background: #e8f5e9;
+              border-radius: 8px;
+              padding: 1rem;
+              margin: 1.5rem 0;
+            "
+          >
+            <span
+              class="reference-label"
+              style="display: block; font-size: 0.8rem; color: #666"
+              >Your Member Reference</span
+            >
+            <span
+              class="reference-value"
+              id="memberRefDisplay"
+              style="
+                display: block;
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #1b5e20;
+              "
+              >TRF-MXXXX</span
+            >
+          </div>
+
+          <div
+            style="
+              background: #fff8e1;
+              border-radius: 8px;
+              padding: 1rem;
+              margin-bottom: 1.5rem;
+              text-align: left;
+            "
+          >
+            <strong style="color: #f57c00">What's Next?</strong>
+            <ul
+              style="
+                margin: 0.5rem 0 0 1rem;
+                padding: 0;
+                color: #666;
+                font-size: 0.9rem;
+              "
+            >
+              <li>Save your member reference</li>
+              <li>Make your first R300+ contribution</li>
+              <li>Submit proof of payment</li>
+            </ul>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="goToAccountBtn">
+            Go to My Account
+          </button>
         </div>
+      </div>
     </div>
 
     <!-- Toast Container -->
@@ -613,6 +780,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
 
     <!-- App Scripts -->
@@ -623,5 +791,5 @@
     <script src="js/sms.js"></script>
     <script src="js/app.js"></script>
     <script src="js/register-kin.js"></script>
-</body>
+  </body>
 </html>
