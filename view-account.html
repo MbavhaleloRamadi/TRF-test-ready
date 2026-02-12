@@ -1,611 +1,695 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="View your account - Tshikota Ro Farana Stokvel">
-    <meta name="theme-color" content="#1B5E20">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="View your account - Tshikota Ro Farana Stokvel"
+    />
+    <meta name="theme-color" content="#1B5E20" />
     <title>My Account - Tshikota Ro Farana Stokvel</title>
-    
+
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+
     <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/components.css">
-    
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/components.css" />
+
     <style>
-        /* Login Page Styles */
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
-            color: white;
-            padding: 3rem 1.5rem;
-            text-align: center;
-        }
-        
-        .login-header-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 3px solid rgba(255,255,255,0.3);
-            margin-bottom: 1rem;
-        }
-        
-        .login-header h1 {
-            font-family: var(--font-display);
-            font-size: var(--text-2xl);
-            margin-bottom: 0.5rem;
-        }
-        
-        .login-header p {
-            opacity: 0.9;
-            font-size: var(--text-sm);
-        }
-        
-        .login-form-container {
-            flex: 1;
-            padding: 1.5rem;
-            max-width: 400px;
-            margin: 0 auto;
-            width: 100%;
-        }
-        
-        .login-form-title {
-            font-size: var(--text-lg);
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            color: var(--gray-800);
-        }
-        
-        .password-field {
-            position: relative;
-        }
-        
-        .password-toggle {
-            position: absolute;
-            right: 12px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            padding: 4px;
-            cursor: pointer;
-            color: var(--gray-500);
-            transition: color var(--transition-fast);
-        }
-        
-        .password-toggle:hover {
-            color: var(--gray-700);
-        }
-        
-        .password-field .form-input {
-            padding-right: 44px;
-        }
-        
-        .forgot-password {
-            display: block;
-            text-align: right;
-            font-size: var(--text-sm);
-            color: var(--primary);
-            margin-top: -0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .forgot-password:hover {
-            text-decoration: underline;
-        }
-        
-        .login-footer {
-            text-align: center;
-            padding: 1.5rem;
-            border-top: 1px solid var(--gray-200);
-            background: var(--gray-50);
-        }
-        
-        .login-footer p {
-            font-size: var(--text-sm);
-            color: var(--gray-600);
-            margin: 0;
-        }
-        
-        .login-footer a {
-            color: var(--primary);
-            font-weight: 500;
-        }
-        
-        /* Dashboard Styles */
-        .dashboard-header {
-            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 50%, var(--primary-light) 100%);
-            color: white;
-            padding: 1.5rem;
-        }
-        
-        .dashboard-header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .member-info {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        
-        .member-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
-            font-size: var(--text-lg);
-        }
-        
-        .member-details h2 {
-            font-size: var(--text-lg);
-            font-weight: 600;
-            margin: 0 0 0.25rem 0;
-        }
-        
-        .member-details p {
-            font-size: var(--text-xs);
-            opacity: 0.8;
-            margin: 0;
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .header-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            padding: 0.5rem;
-            border-radius: var(--radius-md);
-            color: white;
-            cursor: pointer;
-            transition: background var(--transition-fast);
-        }
-        
-        .header-btn:hover {
-            background: rgba(255,255,255,0.25);
-        }
-        
-        .header-btn.refreshing svg {
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-        
-        .stat-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            backdrop-filter: blur(10px);
-        }
-        
-        .stat-label {
-            font-size: var(--text-xs);
-            opacity: 0.8;
-            margin-bottom: 0.25rem;
-        }
-        
-        .stat-value {
-            font-size: var(--text-xl);
-            font-weight: 700;
-        }
-        
-        .stat-card.highlight {
-            background: rgba(212, 175, 55, 0.2);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-        }
-        
-        /* Interest Progress */
-        .interest-section {
-            padding: 1.5rem;
-            background: white;
-        }
-        
-        .section-title {
-            font-size: var(--text-base);
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--gray-800);
-        }
-        
-        .interest-card {
-            background: var(--primary-surface);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-        }
-        
-        .interest-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        }
-        
-        .interest-header h4 {
-            font-size: var(--text-sm);
-            font-weight: 500;
-            color: var(--gray-700);
-            margin: 0;
-        }
-        
-        .progress-bar {
-            height: 12px;
-            background: var(--gray-200);
-            border-radius: var(--radius-full);
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--primary-light));
-            border-radius: var(--radius-full);
-            transition: width 0.5s ease-out;
-        }
-        
-        .progress-fill.complete {
-            background: linear-gradient(90deg, var(--accent-dark), var(--accent));
-        }
-        
-        .interest-status {
-            margin-top: 0.75rem;
-            font-size: var(--text-sm);
-        }
-        
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--radius-full);
-            font-size: var(--text-xs);
-            font-weight: 500;
-        }
-        
-        .status-success {
-            background: var(--success-surface);
-            color: var(--success);
-        }
-        
-        .status-info {
-            color: var(--gray-600);
-        }
-        
-        /* Stokvel Total */
-        .stokvel-total {
-            background: linear-gradient(135deg, var(--gray-900), var(--gray-800));
-            color: white;
-            padding: 1.25rem;
-            border-radius: var(--radius-lg);
-            margin: 0 1.5rem 1.5rem;
-            text-align: center;
-        }
-        
-        .stokvel-total h4 {
-            font-size: var(--text-xs);
-            opacity: 0.7;
-            margin: 0 0 0.25rem 0;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .stokvel-total-amount {
-            font-size: var(--text-3xl);
-            font-weight: 700;
-            color: var(--accent);
-        }
-        
-        /* Submissions Section */
-        .submissions-section {
-            padding: 0 1.5rem 2rem;
-        }
-        
-        .submissions-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .submission-card {
-            background: white;
-            border: 1px solid var(--gray-200);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            margin-bottom: 0.75rem;
-            transition: box-shadow var(--transition-fast);
-        }
-        
-        .submission-card:hover {
-            box-shadow: var(--shadow-md);
-        }
-        
-        .submission-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .submission-month {
-            font-weight: 600;
-            color: var(--gray-800);
-        }
-        
-        .submission-body {
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        
-        .submission-amount {
-            font-size: var(--text-xl);
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .fine-badge {
-            font-size: var(--text-xs);
-            color: var(--warning);
-            background: var(--warning-surface);
-            padding: 0.125rem 0.375rem;
-            border-radius: var(--radius-sm);
-        }
-        
-        .submission-footer {
-            display: flex;
-            justify-content: space-between;
-            font-size: var(--text-xs);
-            color: var(--gray-500);
-        }
-        
-        .submission-rejection {
-            margin-top: 0.75rem;
-            padding: 0.75rem;
-            background: var(--error-surface);
-            border-radius: var(--radius-md);
-            font-size: var(--text-sm);
-            color: var(--error);
-        }
-        
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 2rem 1rem;
-            color: var(--gray-500);
-        }
-        
-        .empty-state svg {
-            margin: 0 auto 1rem;
-            color: var(--gray-300);
-        }
-        
-        .empty-state p {
-            margin-bottom: 1rem;
-        }
-        
-        /* Quick Action */
-        .quick-action {
-            position: fixed;
-            bottom: calc(1.5rem + var(--safe-area-inset-bottom));
-            right: 1.5rem;
-            z-index: var(--z-fixed);
-        }
-        
-        .quick-action-btn {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: var(--primary);
-            color: white;
-            padding: 0.875rem 1.25rem;
-            border-radius: var(--radius-full);
-            box-shadow: var(--shadow-lg);
-            text-decoration: none;
-            font-weight: 500;
-            transition: transform var(--transition-fast), box-shadow var(--transition-fast);
-        }
-        
-        .quick-action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-xl);
-        }
+      /* Login Page Styles */
+      .login-container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .login-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-dark) 0%,
+          var(--primary) 50%,
+          var(--primary-light) 100%
+        );
+        color: white;
+        padding: 3rem 1.5rem;
+        text-align: center;
+      }
+
+      .login-header-logo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1rem;
+      }
+
+      .login-header h1 {
+        font-family: var(--font-display);
+        font-size: var(--text-2xl);
+        margin-bottom: 0.5rem;
+      }
+
+      .login-header p {
+        opacity: 0.9;
+        font-size: var(--text-sm);
+      }
+
+      .login-form-container {
+        flex: 1;
+        padding: 1.5rem;
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      .login-form-title {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+        color: var(--gray-800);
+      }
+
+      .password-field {
+        position: relative;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        padding: 4px;
+        cursor: pointer;
+        color: var(--gray-500);
+        transition: color var(--transition-fast);
+      }
+
+      .password-toggle:hover {
+        color: var(--gray-700);
+      }
+
+      .password-field .form-input {
+        padding-right: 44px;
+      }
+
+      .forgot-password {
+        display: block;
+        text-align: right;
+        font-size: var(--text-sm);
+        color: var(--primary);
+        margin-top: -0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .forgot-password:hover {
+        text-decoration: underline;
+      }
+
+      .login-footer {
+        text-align: center;
+        padding: 1.5rem;
+        border-top: 1px solid var(--gray-200);
+        background: var(--gray-50);
+      }
+
+      .login-footer p {
+        font-size: var(--text-sm);
+        color: var(--gray-600);
+        margin: 0;
+      }
+
+      .login-footer a {
+        color: var(--primary);
+        font-weight: 500;
+      }
+
+      /* Dashboard Styles */
+      .dashboard-header {
+        background: linear-gradient(
+          135deg,
+          var(--primary-dark) 0%,
+          var(--primary) 50%,
+          var(--primary-light) 100%
+        );
+        color: white;
+        padding: 1.5rem;
+      }
+
+      .dashboard-header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .member-info {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .member-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: var(--text-lg);
+      }
+
+      .member-details h2 {
+        font-size: var(--text-lg);
+        font-weight: 600;
+        margin: 0 0 0.25rem 0;
+      }
+
+      .member-details p {
+        font-size: var(--text-xs);
+        opacity: 0.8;
+        margin: 0;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .header-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        padding: 0.5rem;
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        transition: background var(--transition-fast);
+      }
+
+      .header-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+      }
+
+      .header-btn.refreshing svg {
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Stats Cards */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+      }
+
+      .stat-label {
+        font-size: var(--text-xs);
+        opacity: 0.8;
+        margin-bottom: 0.25rem;
+      }
+
+      .stat-value {
+        font-size: var(--text-xl);
+        font-weight: 700;
+      }
+
+      .stat-card.highlight {
+        background: rgba(212, 175, 55, 0.2);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+      }
+
+      /* Interest Progress */
+      .interest-section {
+        padding: 1.5rem;
+        background: white;
+      }
+
+      .section-title {
+        font-size: var(--text-base);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--gray-800);
+      }
+
+      .interest-card {
+        background: var(--primary-surface);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+      }
+
+      .interest-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+
+      .interest-header h4 {
+        font-size: var(--text-sm);
+        font-weight: 500;
+        color: var(--gray-700);
+        margin: 0;
+      }
+
+      .progress-bar {
+        height: 12px;
+        background: var(--gray-200);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          var(--primary),
+          var(--primary-light)
+        );
+        border-radius: var(--radius-full);
+        transition: width 0.5s ease-out;
+      }
+
+      .progress-fill.complete {
+        background: linear-gradient(90deg, var(--accent-dark), var(--accent));
+      }
+
+      .interest-status {
+        margin-top: 0.75rem;
+        font-size: var(--text-sm);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
+        font-weight: 500;
+      }
+
+      .status-success {
+        background: var(--success-surface);
+        color: var(--success);
+      }
+
+      .status-info {
+        color: var(--gray-600);
+      }
+
+      /* Stokvel Total */
+      .stokvel-total {
+        background: linear-gradient(135deg, var(--gray-900), var(--gray-800));
+        color: white;
+        padding: 1.25rem;
+        border-radius: var(--radius-lg);
+        margin: 0 1.5rem 1.5rem;
+        text-align: center;
+      }
+
+      .stokvel-total h4 {
+        font-size: var(--text-xs);
+        opacity: 0.7;
+        margin: 0 0 0.25rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .stokvel-total-amount {
+        font-size: var(--text-3xl);
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      /* Submissions Section */
+      .submissions-section {
+        padding: 0 1.5rem 2rem;
+      }
+
+      .submissions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+      }
+
+      .submission-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: box-shadow var(--transition-fast);
+      }
+
+      .submission-card:hover {
+        box-shadow: var(--shadow-md);
+      }
+
+      .submission-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+
+      .submission-month {
+        font-weight: 600;
+        color: var(--gray-800);
+      }
+
+      .submission-body {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .submission-amount {
+        font-size: var(--text-xl);
+        font-weight: 700;
+        color: var(--primary);
+      }
+
+      .fine-badge {
+        font-size: var(--text-xs);
+        color: var(--warning);
+        background: var(--warning-surface);
+        padding: 0.125rem 0.375rem;
+        border-radius: var(--radius-sm);
+      }
+
+      .submission-footer {
+        display: flex;
+        justify-content: space-between;
+        font-size: var(--text-xs);
+        color: var(--gray-500);
+      }
+
+      .submission-rejection {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        background: var(--error-surface);
+        border-radius: var(--radius-md);
+        font-size: var(--text-sm);
+        color: var(--error);
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--gray-500);
+      }
+
+      .empty-state svg {
+        margin: 0 auto 1rem;
+        color: var(--gray-300);
+      }
+
+      .empty-state p {
+        margin-bottom: 1rem;
+      }
+
+      /* Quick Action */
+      .quick-action {
+        position: fixed;
+        bottom: calc(1.5rem + var(--safe-area-inset-bottom));
+        right: 1.5rem;
+        z-index: var(--z-fixed);
+      }
+
+      .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: var(--primary);
+        color: white;
+        padding: 0.875rem 1.25rem;
+        border-radius: var(--radius-full);
+        box-shadow: var(--shadow-lg);
+        text-decoration: none;
+        font-weight: 500;
+        transition:
+          transform var(--transition-fast),
+          box-shadow var(--transition-fast);
+      }
+
+      .quick-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-xl);
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Login Section -->
     <section id="loginSection" class="login-container">
-        <header class="login-header">
-            <img src="assets/logo/logo.tshikota.jpeg" alt="Tshikota Ro Farana Logo" class="login-header-logo" onerror="this.style.display='none'">
-            <h1>Tshikota Ro Farana</h1>
-            <p>View your stokvel account</p>
-        </header>
-        
-        <main class="login-form-container">
-            <h2 class="login-form-title">Sign in to your account</h2>
-            
-            <form id="loginForm" novalidate>
-                <div class="form-group">
-                    <label for="loginPhone" class="form-label">Phone Number</label>
-                    <input 
-                        type="tel" 
-                        id="loginPhone" 
-                        name="phone" 
-                        class="form-input" 
-                        placeholder="e.g., 0821234567"
-                        required
-                        autocomplete="tel"
-                        maxlength="10"
-                        inputmode="numeric"
-                    >
-                    <span class="form-hint">Your registered phone number</span>
-                    <span class="form-error"></span>
-                </div>
+      <header class="login-header">
+        <img
+          src="assets/logo/logo.tshikota.jpeg"
+          alt="Tshikota Ro Farana Logo"
+          class="login-header-logo"
+          onerror="this.style.display = 'none'"
+        />
+        <h1>Tshikota Ro Farana</h1>
+        <p>View your stokvel account</p>
+      </header>
 
-                <div class="form-group">
-                    <label for="loginPassword" class="form-label">Password</label>
-                    <div class="password-field">
-                        <input 
-                            type="password" 
-                            id="loginPassword" 
-                            name="password" 
-                            class="form-input" 
-                            placeholder="Enter your password"
-                            required
-                            autocomplete="current-password"
-                        >
-                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Toggle password visibility">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <span class="form-error"></span>
-                </div>
-                
-                <a href="#" class="forgot-password" id="forgotPassword">Forgot password?</a>
+      <main class="login-form-container">
+        <h2 class="login-form-title">Sign in to your account</h2>
 
-                <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
-                    <span class="btn-text">Sign In</span>
-                    <span class="btn-loading" style="display: none;">
-                        <span class="spinner"></span>
-                        Signing in...
-                    </span>
-                </button>
-            </form>
-        </main>
-        
-        <footer class="login-footer">
-            <p>Not registered yet? <a href="register.html" id="registerLink">Register here</a></p>
-        </footer>
+        <form id="loginForm" novalidate>
+          <div class="form-group">
+            <label for="loginPhone" class="form-label">Phone Number</label>
+            <input
+              type="tel"
+              id="loginPhone"
+              name="phone"
+              class="form-input"
+              placeholder="e.g., 0821234567"
+              required
+              autocomplete="tel"
+              maxlength="10"
+              inputmode="numeric"
+            />
+            <span class="form-hint">Your registered phone number</span>
+            <span class="form-error"></span>
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword" class="form-label">Password</label>
+            <div class="password-field">
+              <input
+                type="password"
+                id="loginPassword"
+                name="password"
+                class="form-input"
+                placeholder="Enter your password"
+                required
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="togglePassword"
+                aria-label="Toggle password visibility"
+              >
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+              </button>
+            </div>
+            <span class="form-error"></span>
+          </div>
+
+          <a href="#" class="forgot-password" id="forgotPassword"
+            >Forgot password?</a
+          >
+
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loading" style="display: none">
+              <span class="spinner"></span>
+              Signing in...
+            </span>
+          </button>
+        </form>
+      </main>
+
+      <footer class="login-footer">
+        <p>
+          Not registered yet?
+          <a href="register.html" id="registerLink">Register here</a>
+        </p>
+      </footer>
     </section>
 
     <!-- Dashboard Section -->
-    <section id="dashboardSection" style="display: none;">
-        <!-- Dashboard Header -->
-        <header class="dashboard-header">
-            <div class="dashboard-header-top">
-                <div class="member-info">
-                    <div class="member-avatar" id="memberAvatar">--</div>
-                    <div class="member-details">
-                        <h2 id="memberName">Loading...</h2>
-                        <p id="memberRef">Ref: ---</p>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button class="header-btn" id="refreshBtn" aria-label="Refresh data">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M23 4v6h-6M1 20v-6h6"/>
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-                        </svg>
-                    </button>
-                    <button class="header-btn" id="logoutBtn" aria-label="Sign out">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
-                        </svg>
-                    </button>
-                </div>
+    <section id="dashboardSection" style="display: none">
+      <!-- Dashboard Header -->
+      <header class="dashboard-header">
+        <div class="dashboard-header-top">
+          <div class="member-info">
+            <div class="member-avatar" id="memberAvatar">--</div>
+            <div class="member-details">
+              <h2 id="memberName">Loading...</h2>
+              <p id="memberRef">Ref: ---</p>
             </div>
-            
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card highlight">
-                    <div class="stat-label">Total Saved</div>
-                    <div class="stat-value" id="totalSaved">R 0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Total Fines</div>
-                    <div class="stat-value" id="totalFines">R 0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Submissions</div>
-                    <div class="stat-value" id="submissionCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Status</div>
-                    <div class="stat-value" style="font-size: var(--text-sm);">Active</div>
-                </div>
-            </div>
-        </header>
-        
-        <!-- Interest Progress Section -->
-        <section class="interest-section">
-            <h3 class="section-title">Interest Eligibility</h3>
-            <div class="interest-card">
-                <div class="interest-header">
-                    <h4>Progress to R10,000</h4>
-                    <span id="interestProgress">R 0 / R 10,000</span>
-                </div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="interestProgressBar" style="width: 0%"></div>
-                </div>
-                <div class="interest-status" id="interestStatus">
-                    <span class="status-info">Save R10,000 to qualify for interest share</span>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Stokvel Total -->
-        <div class="stokvel-total">
-            <h4>Stokvel Account Total</h4>
-            <div class="stokvel-total-amount" id="stokvelTotal">Loading...</div>
+          </div>
+          <div class="header-actions">
+            <button
+              class="header-btn"
+              id="refreshBtn"
+              aria-label="Refresh data"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M23 4v6h-6M1 20v-6h6" />
+                <path
+                  d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"
+                />
+              </svg>
+            </button>
+            <button class="header-btn" id="logoutBtn" aria-label="Sign out">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          </div>
         </div>
-        
-        <!-- Submissions Section -->
-        <section class="submissions-section">
-            <div class="submissions-header">
-                <h3 class="section-title" style="margin: 0;">My Submissions</h3>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card highlight">
+            <div class="stat-label">Total Saved</div>
+            <div class="stat-value" id="totalSaved">R 0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Fines</div>
+            <div class="stat-value" id="totalFines">R 0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Submissions</div>
+            <div class="stat-value" id="submissionCount">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Status</div>
+            <div class="stat-value" style="font-size: var(--text-sm)">
+              Active
             </div>
-            <div id="submissionsList">
-                <!-- Submissions will be loaded here -->
-                <div class="skeleton skeleton-card"></div>
-                <div class="skeleton skeleton-card"></div>
-            </div>
-        </section>
-        
-        <!-- Quick Action Button -->
-        <div class="quick-action">
-            <a href="submit-pop.html" class="quick-action-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                Submit Payment
-            </a>
+          </div>
         </div>
+      </header>
+
+      <!-- Interest Progress Section -->
+      <section class="interest-section">
+        <h3 class="section-title">Interest Eligibility</h3>
+        <div class="interest-card">
+          <div class="interest-header">
+            <h4>Progress to R10,000</h4>
+            <span id="interestProgress">R 0 / R 10,000</span>
+          </div>
+          <div class="progress-bar">
+            <div
+              class="progress-fill"
+              id="interestProgressBar"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div class="interest-status" id="interestStatus">
+            <span class="status-info"
+              >Save R10,000 to qualify for interest share</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Stokvel Total -->
+      <div class="stokvel-total">
+        <h4>Stokvel Account Total</h4>
+        <div class="stokvel-total-amount" id="stokvelTotal">Loading...</div>
+      </div>
+
+      <!-- Submissions Section -->
+      <section class="submissions-section">
+        <div class="submissions-header">
+          <h3 class="section-title" style="margin: 0">My Submissions</h3>
+        </div>
+        <div id="submissionsList">
+          <!-- Submissions will be loaded here -->
+          <div class="skeleton skeleton-card"></div>
+          <div class="skeleton skeleton-card"></div>
+        </div>
+      </section>
+
+      <!-- Quick Action Button -->
+      <div class="quick-action">
+        <a href="submit-pop.html" class="quick-action-btn">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Submit Payment
+        </a>
+      </div>
     </section>
 
     <!-- Toast Container -->
@@ -615,7 +699,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     <!-- App Scripts -->
     <script src="js/firebase-config.js"></script>
     <script src="js/utils.js"></script>
@@ -624,5 +709,5 @@
     <script src="js/sms.js"></script>
     <script src="js/app.js"></script>
     <script src="js/view-account.js"></script>
-</body>
+  </body>
 </html>
