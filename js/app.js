@@ -56,6 +56,7 @@ const App = {
         };
     },
 
+
     /**
      * Initialize toast container
      */
