@@ -1,379 +1,420 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Tshikota Ro Farana Stokvel - South African savings club management">
-    <meta name="theme-color" content="#1B5E20">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Tshikota Ro Farana Stokvel - South African savings club management"
+    />
+    <meta name="theme-color" content="#1B5E20" />
     <title>Tshikota Ro Farana Stokvel</title>
-    
+
     <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
     <!-- Styles -->
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/components.css">
-    
+    <link rel="stylesheet" href="css/styles.css" />
+    <link rel="stylesheet" href="css/components.css" />
+
     <style>
-        /* Landing page styles */
-        .hero {
-            background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 50%, #43A047 100%);
-            color: white;
-            padding: 3rem 1.5rem;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
+      /* Landing page styles */
+      .hero {
+        background: linear-gradient(
+          135deg,
+          #1b5e20 0%,
+          #2e7d32 50%,
+          #43a047 100%
+        );
+        color: white;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 70%
+        );
+        animation: pulse-bg 10s infinite;
+      }
+
+      @keyframes pulse-bg {
+        0%,
+        100% {
+          transform: scale(1);
         }
-        
-        .hero::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse-bg 10s infinite;
+        50% {
+          transform: scale(1.1);
         }
-        
-        @keyframes pulse-bg {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        .hero-content {
-            position: relative;
-            z-index: 1;
-        }
-        
-        .hero-logo {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.3);
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-        
-        .hero h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .hero-subtitle {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin-bottom: 1rem;
-        }
-        
-        .hero-tagline {
-            font-size: 0.9rem;
-            opacity: 0.8;
-            font-style: italic;
-        }
-        
-        .nav-cards {
-            padding: 2rem 1rem;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-        
-        .nav-card {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.25rem;
-            background: white;
-            border: 1px solid #E0E0E0;
-            border-radius: 16px;
-            margin-bottom: 1rem;
-            text-decoration: none;
-            color: inherit;
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .nav-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            border-color: #81C784;
-        }
-        
-        .nav-card:active {
-            transform: translateY(0);
-        }
-        
-        .nav-card-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            flex-shrink: 0;
-        }
-        
-        .nav-card-icon.green { background: #E8F5E9; }
-        .nav-card-icon.blue { background: #E3F2FD; }
-        .nav-card-icon.orange { background: #FFF3E0; }
-        .nav-card-icon.purple { background: #F3E5F5; }
-        
-        .nav-card-content {
-            flex: 1;
-        }
-        
-        .nav-card-title {
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 0.25rem;
-            color: #333;
-        }
-        
-        .nav-card-desc {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .nav-card-arrow {
-            color: #999;
-            font-size: 1.25rem;
-        }
-        
-        .info-section {
-            padding: 2rem 1.5rem;
-            background: #FAFAFA;
-        }
-        
-        .info-section h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            color: #1B5E20;
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-        
-        .rules-list {
-            max-width: 400px;
-            margin: 0 auto;
-        }
-        
-        .rule-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px dashed #E0E0E0;
-        }
-        
-        .rule-item:last-child {
-            border-bottom: none;
-        }
-        
-        .rule-icon {
-            font-size: 1.25rem;
-        }
-        
-        .rule-text {
-            flex: 1;
-        }
-        
-        .rule-text strong {
-            display: block;
-            color: #333;
-            margin-bottom: 0.125rem;
-        }
-        
-        .rule-text span {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        
-        .banking-section {
-            padding: 2rem 1.5rem;
-            text-align: center;
-        }
-        
-        .banking-section h2 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            color: #1B5E20;
-            margin-bottom: 1rem;
-        }
-        
-        .banking-card {
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            border-radius: 16px;
-            padding: 1.5rem;
-            max-width: 350px;
-            margin: 0 auto;
-            text-align: left;
-        }
-        
-        .banking-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.5rem 0;
-            border-bottom: 1px dashed rgba(0,0,0,0.1);
-        }
-        
-        .banking-row:last-child {
-            border-bottom: none;
-        }
-        
-        .banking-label {
-            color: #555;
-            font-size: 0.85rem;
-        }
-        
-        .banking-value {
-            font-weight: 600;
-            color: #1565C0;
-        }
-        
-        .footer {
-            padding: 2rem 1.5rem;
-            text-align: center;
-            background: #333;
-            color: #999;
-            font-size: 0.85rem;
-        }
-        
-        .footer a {
-            color: #81C784;
-        }
-        
-        .admin-link {
-            display: inline-block;
-            margin-top: 1rem;
-            padding: 0.5rem 1rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: 6px;
-            color: #999;
-            text-decoration: none;
-            font-size: 0.8rem;
-        }
-        
-        .admin-link:hover {
-            background: rgba(255,255,255,0.15);
-            color: #ccc;
-        }
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero-logo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      }
+
+      .hero h1 {
+        font-family: "Playfair Display", serif;
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .hero-subtitle {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+      }
+
+      .hero-tagline {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        font-style: italic;
+      }
+
+      .nav-cards {
+        padding: 2rem 1rem;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      .nav-card {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.25rem;
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 16px;
+        margin-bottom: 1rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .nav-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        border-color: #81c784;
+      }
+
+      .nav-card:active {
+        transform: translateY(0);
+      }
+
+      .nav-card-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        flex-shrink: 0;
+      }
+
+      .nav-card-icon.green {
+        background: #e8f5e9;
+      }
+      .nav-card-icon.blue {
+        background: #e3f2fd;
+      }
+      .nav-card-icon.orange {
+        background: #fff3e0;
+      }
+      .nav-card-icon.purple {
+        background: #f3e5f5;
+      }
+
+      .nav-card-content {
+        flex: 1;
+      }
+
+      .nav-card-title {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.25rem;
+        color: #333;
+      }
+
+      .nav-card-desc {
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .nav-card-arrow {
+        color: #999;
+        font-size: 1.25rem;
+      }
+
+      .info-section {
+        padding: 2rem 1.5rem;
+        background: #fafafa;
+      }
+
+      .info-section h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: #1b5e20;
+        margin-bottom: 1rem;
+        text-align: center;
+      }
+
+      .rules-list {
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      .rule-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px dashed #e0e0e0;
+      }
+
+      .rule-item:last-child {
+        border-bottom: none;
+      }
+
+      .rule-icon {
+        font-size: 1.25rem;
+      }
+
+      .rule-text {
+        flex: 1;
+      }
+
+      .rule-text strong {
+        display: block;
+        color: #333;
+        margin-bottom: 0.125rem;
+      }
+
+      .rule-text span {
+        font-size: 0.85rem;
+        color: #666;
+      }
+
+      .banking-section {
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      .banking-section h2 {
+        font-family: "Playfair Display", serif;
+        font-size: 1.5rem;
+        color: #1b5e20;
+        margin-bottom: 1rem;
+      }
+
+      .banking-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-radius: 16px;
+        padding: 1.5rem;
+        max-width: 350px;
+        margin: 0 auto;
+        text-align: left;
+      }
+
+      .banking-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed rgba(0, 0, 0, 0.1);
+      }
+
+      .banking-row:last-child {
+        border-bottom: none;
+      }
+
+      .banking-label {
+        color: #555;
+        font-size: 0.85rem;
+      }
+
+      .banking-value {
+        font-weight: 600;
+        color: #1565c0;
+      }
+
+      .footer {
+        padding: 2rem 1.5rem;
+        text-align: center;
+        background: #333;
+        color: #999;
+        font-size: 0.85rem;
+      }
+
+      .footer a {
+        color: #81c784;
+      }
+
+      .admin-link {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: #999;
+        text-decoration: none;
+        font-size: 0.8rem;
+      }
+
+      .admin-link:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ccc;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Hero Section -->
     <header class="hero">
-        <div class="hero-content">
-            <img src="assets/logo/logo.tshikota.jpeg" alt="Tshikota Ro Farana Logo" class="hero-logo" onerror="this.style.display='none'">
-            <h1>Tshikota Ro Farana</h1>
-            <p class="hero-subtitle">Stokvel Management Portal</p>
-            <p class="hero-tagline">"Building wealth together, one month at a time"</p>
-        </div>
+      <div class="hero-content">
+        <img
+          src="assets/logo/logo.tshikota.jpeg"
+          alt="Tshikota Ro Farana Logo"
+          class="hero-logo"
+          onerror="this.style.display = 'none'"
+        />
+        <h1>Tshikota Ro Farana</h1>
+        <p class="hero-subtitle">Stokvel Management Portal</p>
+        <p class="hero-tagline">
+          "Building wealth together, one month at a time"
+        </p>
+      </div>
     </header>
 
     <!-- Navigation Cards -->
     <nav class="nav-cards">
-        <a href="register.html" class="nav-card">
-            <div class="nav-card-icon purple">👤</div>
-            <div class="nav-card-content">
-                <div class="nav-card-title">Register as Member</div>
-                <div class="nav-card-desc">Join our stokvel savings club</div>
-            </div>
-            <span class="nav-card-arrow">→</span>
-        </a>
-        
-        <a href="submit-pop.html" class="nav-card">
-            <div class="nav-card-icon green">📤</div>
-            <div class="nav-card-content">
-                <div class="nav-card-title">Submit Proof of Payment</div>
-                <div class="nav-card-desc">Upload your payment confirmation</div>
-            </div>
-            <span class="nav-card-arrow">→</span>
-        </a>
-        
-        <a href="view-account.html" class="nav-card">
-            <div class="nav-card-icon blue">👁️</div>
-            <div class="nav-card-content">
-                <div class="nav-card-title">View My Account</div>
-                <div class="nav-card-desc">Check your savings and history</div>
-            </div>
-            <span class="nav-card-arrow">→</span>
-        </a>
+      <a href="register.html" class="nav-card">
+        <div class="nav-card-icon purple"><i class="fa-solid fa-user"></i></div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Register as Member</div>
+          <div class="nav-card-desc">Join our stokvel savings club</div>
+        </div>
+        <span class="nav-card-arrow">→</span>
+      </a>
+
+      <a href="submit-pop.html" class="nav-card">
+        <div class="nav-card-icon green"><i class="fa-solid fa-upload"></i></div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">Submit Proof of Payment</div>
+          <div class="nav-card-desc">Upload your payment confirmation</div>
+        </div>
+        <span class="nav-card-arrow">→</span>
+      </a>
+
+      <a href="view-account.html" class="nav-card">
+        <div class="nav-card-icon blue"><i class="fa-solid fa-eye"></i></div>
+        <div class="nav-card-content">
+          <div class="nav-card-title">View My Account</div>
+          <div class="nav-card-desc">Check your savings and history</div>
+        </div>
+        <span class="nav-card-arrow">→</span>
+      </a>
     </nav>
 
     <!-- Stokvel Rules -->
     <section class="info-section">
-        <h2>📋 Stokvel Rules</h2>
-        <div class="rules-list">
-            <div class="rule-item">
-                <span class="rule-icon">💰</span>
-                <div class="rule-text">
-                    <strong>Minimum R300/month</strong>
-                    <span>Contribute at least R300 each month</span>
-                </div>
-            </div>
-            <div class="rule-item">
-                <span class="rule-icon">📅</span>
-                <div class="rule-text">
-                    <strong>Pay by the 7th</strong>
-                    <span>Avoid the R50 late fee</span>
-                </div>
-            </div>
-            <div class="rule-item">
-                <span class="rule-icon">🎯</span>
-                <div class="rule-text">
-                    <strong>R10,000+ for Interest</strong>
-                    <span>Save R10k to qualify for interest share</span>
-                </div>
-            </div>
-            <div class="rule-item">
-                <span class="rule-icon">⚠️</span>
-                <div class="rule-text">
-                    <strong>Don't Skip 3 Months</strong>
-                    <span>Membership may be suspended</span>
-                </div>
-            </div>
+      <h2>📋 Stokvel Rules</h2>
+      <div class="rules-list">
+        <div class="rule-item">
+          <span class="rule-icon"><i class="fa-solid fa-coins"></i></span>
+          <div class="rule-text">
+            <strong>Minimum R300/month</strong>
+            <span>Contribute at least R300 each month</span>
+          </div>
         </div>
+        <div class="rule-item">
+          <span class="rule-icon"><i class="fa-solid fa-calendar"></i></span>
+          <div class="rule-text">
+            <strong>Pay by the 7th</strong>
+            <span>Avoid the R50 late fee</span>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon"><i class="fa-solid fa-bullseye"></i></span>
+          <div class="rule-text">
+            <strong>R10,000+ for Interest</strong>
+            <span>Save R10k to qualify for interest share</span>
+          </div>
+        </div>
+        <div class="rule-item">
+          <span class="rule-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <div class="rule-text">
+            <strong>Don't Skip 3 Months</strong>
+            <span>Membership may be suspended</span>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Banking Details -->
     <section class="banking-section">
-        <h2>🏦 Banking Details</h2>
-        <div class="banking-card">
-            <div class="banking-row">
-                <span class="banking-label">Bank</span>
-                <span class="banking-value">FNB</span>
-            </div>
-            <div class="banking-row">
-                <span class="banking-label">Account Name</span>
-                <span class="banking-value">Stockvel</span>
-            </div>
-            <div class="banking-row">
-                <span class="banking-label">Account Number</span>
-                <span class="banking-value">63190192880</span>
-            </div>
-            <div class="banking-row">
-                <span class="banking-label">Branch Code</span>
-                <span class="banking-value">250655</span>
-            </div>
-            <div class="banking-row">
-                <span class="banking-label">Reference</span>
-                <span class="banking-value">Your Full Name + Month</span>
-            </div>
+      <h2><i class="fa-solid fa-building-columns"></i> Banking Details</h2>
+      <div class="banking-card">
+        <div class="banking-row">
+          <span class="banking-label">Bank</span>
+          <span class="banking-value">FNB</span>
         </div>
+        <div class="banking-row">
+          <span class="banking-label">Account Name</span>
+          <span class="banking-value">Stockvel</span>
+        </div>
+        <div class="banking-row">
+          <span class="banking-label">Account Number</span>
+          <span class="banking-value">63190192880</span>
+        </div>
+        <div class="banking-row">
+          <span class="banking-label">Branch Code</span>
+          <span class="banking-value">250655</span>
+        </div>
+        <div class="banking-row">
+          <span class="banking-label">Reference</span>
+          <span class="banking-value">Your Full Name + Month</span>
+        </div>
+      </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-        <p>© 2026 NortSide Connect</p><p>www.nortsideconnect.co.za</p>
-        <a href="admin-index.html" class="admin-link">🔒 Admin Panel</a>
+      <p>© 2026 NortSide Connect</p>
+      <p>www.nortsideconnect.co.za</p>
+      <a href="admin-index.html" class="admin-link"><i class="fa-solid fa-lock"></i> Admin Panel</a>
     </footer>
 
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
-</body>
+  </body>
 </html>
