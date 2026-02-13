@@ -461,60 +461,51 @@ const Admin = (() => {
   // ==========================================
 
   function viewPOP(submissionId) {
-    const submission = pendingSubmissions.find((s) => s.id === submissionId);
+    const submission = pendingSubmissions.find(s => s.id === submissionId);
     if (!submission) {
-      App.showToast("Submission not found", "error");
-      return;
+        App.showToast('Submission not found', 'error');
+        return;
     }
-
-    // Check for proof URL - could be in different fields
-    const proofUrl =
-      submission.popImage || submission.popImageUrl || submission.proofUrl;
-
-    console.log("📎 Submission:", submission);
-    console.log("📎 popImage:", submission.popImage);
-    console.log("📎 popImageUrl:", submission.popImageUrl);
-    console.log("📎 proofUrl resolved:", proofUrl);
-
-    if (!proofUrl) {
-      App.showToast("No proof of payment found", "warning");
-      return;
+    
+    if (!submission.proofUrl) {
+        App.showToast('No proof of payment found', 'warning');
+        console.log('Submission data:', submission);
+        return;
     }
-
+    
     currentSubmission = submission;
-
-    const popViewer = document.getElementById("popViewer");
-    const popImage = document.getElementById("popViewerImage");
-    const popPdf = document.getElementById("popViewerPdf");
-    const popInfo = document.getElementById("popViewerInfo");
-
+    
+    const popViewer = document.getElementById('popViewer');
+    const popImage = document.getElementById('popViewerImage');
+    const popPdf = document.getElementById('popViewerPdf');
+    const popInfo = document.getElementById('popViewerInfo');
+    
     // Check if it's a PDF (base64 or URL)
-    const isPDF =
-      proofUrl.includes("application/pdf") ||
-      proofUrl.toLowerCase().includes(".pdf");
-
+    const isPDF = submission.proofUrl.includes('application/pdf') || 
+                  submission.proofUrl.toLowerCase().endsWith('.pdf');
+    
     if (popImage && popPdf) {
-      if (isPDF) {
-        // Show PDF viewer, hide image
-        popImage.style.display = "none";
-        popPdf.style.display = "block";
-        popPdf.src = proofUrl;
-      } else {
-        // Show image, hide PDF viewer
-        popImage.style.display = "block";
-        popPdf.style.display = "none";
-        popImage.src = proofUrl;
-      }
+        if (isPDF) {
+            // Show PDF viewer, hide image
+            popImage.style.display = 'none';
+            popPdf.style.display = 'block';
+            popPdf.src = submission.proofUrl;
+        } else {
+            // Show image, hide PDF viewer
+            popImage.style.display = 'block';
+            popPdf.style.display = 'none';
+            popImage.src = submission.proofUrl;
+        }
     } else if (popImage) {
-      // Fallback: just try to show in image tag
-      popImage.src = proofUrl;
+        // Fallback: just try to show in image tag
+        popImage.src = submission.proofUrl;
     }
-
+    
     if (popInfo) {
-      popInfo.innerHTML = `
+        popInfo.innerHTML = `
             <div class="pop-info-row">
                 <span class="pop-info-label">Member</span>
-                <span class="pop-info-value">${submission.name || "Unknown"}</span>
+                <span class="pop-info-value">${submission.memberName || 'Unknown'}</span>
             </div>
             <div class="pop-info-row">
                 <span class="pop-info-label">Amount</span>
@@ -522,39 +513,39 @@ const Admin = (() => {
             </div>
             <div class="pop-info-row">
                 <span class="pop-info-label">Month</span>
-                <span class="pop-info-value">${submission.paymentMonth || "Unknown"}</span>
+                <span class="pop-info-value">${submission.month || 'Unknown'}</span>
             </div>
             <div class="pop-info-row">
-                <span class="pop-info-label">Reference</span>
-                <span class="pop-info-value">${submission.reference || "N/A"}</span>
+                <span class="pop-info-label">Submitted</span>
+                <span class="pop-info-value">${formatTimeAgo(submission.submittedAt)}</span>
             </div>
-            ${submission.isLate ? '<div class="pop-info-late"><i class="fa-solid fa-triangle-exclamation"></i> Late Payment - R50 Fine</div>' : ""}
+            ${submission.isLate ? '<div class="pop-info-late"><i class="fa-solid fa-warning"></i> Late Payment - R50 Fine</div>' : ''}
         `;
     }
-
+    
     if (popViewer) {
-      popViewer.classList.add("active");
-      document.body.style.overflow = "hidden";
+        popViewer.classList.add('active');
+        document.body.style.overflow = 'hidden';
     }
-
+    
     // Set up action buttons
-    const approveBtn = document.getElementById("popApproveBtn");
-    const rejectBtn = document.getElementById("popRejectBtn");
-
+    const approveBtn = document.getElementById('popApproveBtn');
+    const rejectBtn = document.getElementById('popRejectBtn');
+    
     if (approveBtn) {
-      approveBtn.onclick = () => {
-        closePOPViewer();
-        approveSubmission(submissionId);
-      };
+        approveBtn.onclick = () => {
+            closePOPViewer();
+            approveSubmission(submissionId);
+        };
     }
-
+    
     if (rejectBtn) {
-      rejectBtn.onclick = () => {
-        closePOPViewer();
-        rejectSubmission(submissionId);
-      };
+        rejectBtn.onclick = () => {
+            closePOPViewer();
+            rejectSubmission(submissionId);
+        };
     }
-  }
+}
 
   function closePOPViewer() {
     const popViewer = document.getElementById("popViewer");

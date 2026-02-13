@@ -28,6 +28,19 @@
     <link rel="stylesheet" href="css/components.css" />
 
     <style>
+      /* Prevent horizontal scroll */
+      html,
+      body {
+        overflow-x: hidden;
+        width: 100%;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
       /* Registration-specific styles */
       .register-hero {
         background: linear-gradient(
@@ -115,10 +128,21 @@
         padding: 1.5rem;
         max-width: 500px;
         margin: 0 auto;
+        width: 100%;
       }
 
       .form-section {
         margin-bottom: 1.5rem;
+      }
+
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+
+      .form-input,
+      .form-select {
+        width: 100%;
+        max-width: 100%;
       }
 
       .form-section-title {
