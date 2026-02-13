@@ -131,3 +131,619 @@
     .admin-header { padding: 1rem; }
     .admin-content { padding: 1rem; }
 }
+
+/* ==========================================
+   ADMIN LOGIN PAGE
+   ========================================== */
+
+.admin-login {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+.back-link {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.back-link:hover {
+    opacity: 1;
+}
+
+.admin-login-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    text-align: center;
+}
+
+.admin-login-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--primary-surface);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: var(--primary);
+}
+
+.admin-login-icon i {
+    font-size: 2rem;
+}
+
+.admin-login-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--neutral-900);
+    margin-bottom: 0.5rem;
+}
+
+.admin-login-subtitle {
+    color: var(--neutral-600);
+    margin-bottom: 2rem;
+}
+
+.admin-role-info {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--neutral-100);
+    font-size: 0.85rem;
+    color: var(--neutral-600);
+}
+
+/* ==========================================
+   ADMIN ROLE BADGE
+   ========================================== */
+
+.admin-role-badge {
+    background: var(--accent);
+    color: var(--neutral-900);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 1rem;
+    text-transform: uppercase;
+}
+
+/* ==========================================
+   PENDING CARDS ENHANCED
+   ========================================== */
+
+.pending-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-left: 4px solid var(--accent);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.pending-card:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-elevated);
+}
+
+.pending-info {
+    flex: 1;
+}
+
+.pending-member {
+    font-weight: 600;
+    color: var(--neutral-900);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.pending-member i {
+    color: var(--primary);
+}
+
+.pending-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--neutral-600);
+}
+
+.pending-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.late-tag {
+    color: #DC2626;
+    font-weight: 600;
+}
+
+.pending-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    min-width: 100px;
+    text-align: right;
+}
+
+.pending-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Icon Buttons */
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: var(--neutral-100);
+    color: var(--neutral-600);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: var(--neutral-200);
+}
+
+.btn-icon.btn-success {
+    background: var(--primary-surface);
+    color: var(--primary);
+}
+
+.btn-icon.btn-success:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-icon.btn-danger {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.btn-icon.btn-danger:hover {
+    background: #DC2626;
+    color: white;
+}
+
+/* ==========================================
+   MEMBER CARDS
+   ========================================== */
+
+.member-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s;
+}
+
+.member-card:hover {
+    transform: translateY(-2px);
+}
+
+.member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.member-info {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 600;
+    color: var(--neutral-900);
+    margin-bottom: 0.25rem;
+}
+
+.member-details {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.85rem;
+    color: var(--neutral-600);
+}
+
+.member-details span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.member-stats {
+    text-align: right;
+}
+
+.member-savings {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.member-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.member-status.active {
+    background: var(--primary-surface);
+    color: var(--primary);
+}
+
+.member-status.inactive {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+/* ==========================================
+   POP VIEWER MODAL
+   ========================================== */
+
+.pop-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.pop-viewer.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.pop-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.pop-viewer-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.pop-viewer-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    overflow: auto;
+}
+
+.pop-viewer-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.pop-viewer-footer {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.pop-viewer-info {
+    color: white;
+    text-align: center;
+    padding: 1rem;
+}
+
+.pop-viewer-info p {
+    margin: 0.25rem 0;
+}
+
+/* ==========================================
+   DONUT CHART
+   ========================================== */
+
+.chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    padding: 1.5rem;
+}
+
+.donut-chart {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--primary) 0deg calc(var(--percent) * 3.6deg),
+        var(--accent) calc(var(--percent) * 3.6deg) 360deg
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.donut-hole {
+    width: 100px;
+    height: 100px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.donut-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--neutral-900);
+}
+
+.donut-label {
+    font-size: 0.75rem;
+    color: var(--neutral-600);
+}
+
+.chart-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.legend-color.savings {
+    background: var(--primary);
+}
+
+.legend-color.fines {
+    background: var(--accent);
+}
+
+/* ==========================================
+   TAB PANELS
+   ========================================== */
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.panel-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--neutral-900);
+    margin: 0;
+}
+
+/* Tab Badge */
+.tab-badge {
+    background: #DC2626;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-left: 0.5rem;
+}
+
+/* ==========================================
+   EMPTY STATES
+   ========================================== */
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--neutral-600);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--neutral-800);
+    margin-bottom: 0.5rem;
+}
+
+.empty-text {
+    font-size: 0.9rem;
+}
+
+/* ==========================================
+   REPORTS GRID
+   ========================================== */
+
+.reports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.report-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-soft);
+}
+
+.report-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.report-card-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-surface);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    font-size: 1.25rem;
+}
+
+.report-card-title {
+    font-weight: 600;
+    color: var(--neutral-900);
+}
+
+.report-card-subtitle {
+    font-size: 0.85rem;
+    color: var(--neutral-600);
+}
+
+.report-stat {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--neutral-100);
+}
+
+.report-stat:last-child {
+    border-bottom: none;
+}
+
+.report-stat-label {
+    color: var(--neutral-600);
+}
+
+.report-stat-value {
+    font-weight: 600;
+    color: var(--neutral-900);
+}
+
+/* ==========================================
+   SKELETON LOADING
+   ========================================== */
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+}
+
+.skeleton-card {
+    height: 80px;
+    margin-bottom: 1rem;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================== */
+
+@media (max-width: 768px) {
+    .pending-card {
+        flex-wrap: wrap;
+    }
+    
+    .pending-amount {
+        width: 100%;
+        text-align: left;
+        margin-top: 0.5rem;
+    }
+    
+    .pending-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+    }
+    
+    .member-card {
+        flex-wrap: wrap;
+    }
+    
+    .member-stats {
+        width: 100%;
+        text-align: left;
+        margin-top: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+}

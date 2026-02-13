@@ -43,28 +43,91 @@
         overflow: hidden;
       }
 
+      /* Floating Circles Animation */
       .hero::before {
         content: "";
         position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
+        width: 300px;
+        height: 300px;
         background: radial-gradient(
           circle,
-          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0.15) 0%,
           transparent 70%
         );
-        animation: pulse-bg 10s infinite;
+        border-radius: 50%;
+        top: -100px;
+        left: -100px;
+        animation: floatLeft 20s ease-in-out infinite;
       }
 
-      @keyframes pulse-bg {
+      .hero::after {
+        content: "";
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: radial-gradient(
+          circle,
+          rgba(212, 175, 55, 0.1) 0%,
+          transparent 70%
+        );
+        border-radius: 50%;
+        bottom: -50px;
+        right: -50px;
+        animation: floatRight 25s ease-in-out infinite;
+      }
+
+      @keyframes floatLeft {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        25% {
+          transform: translate(50px, 30px) scale(1.1);
+        }
+        50% {
+          transform: translate(100px, -20px) scale(0.9);
+        }
+        75% {
+          transform: translate(30px, -40px) scale(1.05);
+        }
+      }
+
+      @keyframes floatRight {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+        }
+        25% {
+          transform: translate(-40px, -30px) scale(1.1);
+        }
+        50% {
+          transform: translate(-80px, 20px) scale(0.95);
+        }
+        75% {
+          transform: translate(-20px, 40px) scale(1.05);
+        }
+      }
+
+      /* Pulsing Logo */
+      .hero-logo {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        animation: logoPulse 3s ease-in-out infinite;
+      }
+
+      @keyframes logoPulse {
         0%,
         100% {
           transform: scale(1);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         }
         50% {
-          transform: scale(1.1);
+          transform: scale(1.05);
+          box-shadow: 0 8px 40px rgba(212, 175, 55, 0.4);
         }
       }
 
@@ -99,6 +162,44 @@
         font-size: 0.9rem;
         opacity: 0.8;
         font-style: italic;
+      }
+
+      /* Additional floating circles */
+      .hero .circle-1,
+      .hero .circle-2,
+      .hero .circle-3 {
+        position: absolute;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.08) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+
+      .hero .circle-1 {
+        width: 150px;
+        height: 150px;
+        top: 20%;
+        right: 10%;
+        animation: floatLeft 18s ease-in-out infinite reverse;
+      }
+
+      .hero .circle-2 {
+        width: 100px;
+        height: 100px;
+        bottom: 30%;
+        left: 15%;
+        animation: floatRight 22s ease-in-out infinite;
+      }
+
+      .hero .circle-3 {
+        width: 80px;
+        height: 80px;
+        top: 60%;
+        right: 25%;
+        animation: floatLeft 15s ease-in-out infinite;
       }
 
       .nav-cards {
@@ -300,6 +401,9 @@
   <body>
     <!-- Hero Section -->
     <header class="hero">
+      <div class="circle-1"></div>
+      <div class="circle-2"></div>
+      <div class="circle-3"></div>
       <div class="hero-content">
         <img
           src="assets/logo/logo.tshikota.jpeg"
@@ -327,7 +431,9 @@
       </a>
 
       <a href="submit-pop.html" class="nav-card">
-        <div class="nav-card-icon green"><i class="fa-solid fa-upload"></i></div>
+        <div class="nav-card-icon green">
+          <i class="fa-solid fa-upload"></i>
+        </div>
         <div class="nav-card-content">
           <div class="nav-card-title">Submit Proof of Payment</div>
           <div class="nav-card-desc">Upload your payment confirmation</div>
@@ -371,7 +477,9 @@
           </div>
         </div>
         <div class="rule-item">
-          <span class="rule-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+          <span class="rule-icon"
+            ><i class="fa-solid fa-triangle-exclamation"></i
+          ></span>
           <div class="rule-text">
             <strong>Don't Skip 3 Months</strong>
             <span>Membership may be suspended</span>
@@ -411,7 +519,9 @@
     <footer class="footer">
       <p>© 2026 NortSide Connect</p>
       <p>www.nortsideconnect.co.za</p>
-      <a href="admin-index.html" class="admin-link"><i class="fa-solid fa-lock"></i> Admin Panel</a>
+      <a href="admin-index.html" class="admin-link"
+        ><i class="fa-solid fa-lock"></i> Admin Panel</a
+      >
     </footer>
 
     <!-- Toast Container -->
