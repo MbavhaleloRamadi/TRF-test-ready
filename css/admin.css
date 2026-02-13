@@ -747,3 +747,208 @@
         align-items: center;
     }
 }
+
+/* ==========================================
+   POP VIEWER - ENHANCED FOR PDF & IMAGES
+   ========================================== */
+
+.pop-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.pop-viewer.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.pop-viewer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.pop-viewer-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pop-viewer-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: background 0.2s;
+}
+
+.pop-viewer-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.pop-viewer-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .pop-viewer-body {
+        flex-direction: row;
+        gap: 1.5rem;
+    }
+}
+
+.pop-viewer-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    min-height: 200px;
+}
+
+.pop-viewer-image {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.pop-viewer-pdf {
+    width: 100%;
+    height: 60vh;
+    border: none;
+    border-radius: 8px;
+    background: white;
+}
+
+@media (min-width: 768px) {
+    .pop-viewer-image,
+    .pop-viewer-pdf {
+        max-height: 70vh;
+        height: 70vh;
+    }
+}
+
+.pop-viewer-info {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    color: white;
+}
+
+@media (min-width: 768px) {
+    .pop-viewer-info {
+        width: 280px;
+        margin-top: 0;
+        flex-shrink: 0;
+    }
+}
+
+.pop-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pop-info-row:last-child {
+    border-bottom: none;
+}
+
+.pop-info-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.pop-info-value {
+    font-weight: 600;
+    text-align: right;
+}
+
+.pop-info-late {
+    background: #DC2626;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+}
+
+.pop-viewer-footer {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pop-viewer-footer .btn {
+    min-width: 140px;
+    padding: 0.875rem 1.5rem;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(27, 94, 32, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Fine amount in pending cards */
+.fine-amount {
+    display: block;
+    font-size: 0.75rem;
+    color: #DC2626;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+.pending-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+    min-width: 120px;
+    text-align: right;
+}

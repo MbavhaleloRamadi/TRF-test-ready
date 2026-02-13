@@ -76,6 +76,62 @@ function getRealtimeDB() {
 // ==========================================
 
 const Database = {
+  /**
+   * ==========================================
+   * LATE PAYMENT CHECKER
+   * ==========================================
+   *
+   * Rule: First payment after the 7th = R50 fine
+   * Subsequent payments in same month = NO fine
+   */
+
+  /**
+   * Check if this is a late first payment for the month
+   * @param {string} memberId - Member ID
+   * @param {string} month - Payment month (e.g., "February 2026")
+   * @returns {Promise<{isLate: boolean, isFirstPayment: boolean, fineAmount: number}>}
+   */
+  async checkLatePayment(memberId, month) {
+    try {
+      const today = new Date();
+      const dayOfMonth = today.getDate();
+
+      // Grace period: 1st - 7th of the month
+      const isPastGracePeriod = dayOfMonth > 7;
+
+      // If we're within grace period, no fine
+      if (!isPastGracePeriod) {
+        console.log("✅ Within grace period (1st-7th)");
+        return { isLate: false, isFirstPayment: true, fineAmount: 0 };
+      }
+
+      // Check if member has already made a VERIFIED payment this month
+      const snapshot = await db
+        .collection("submissions")
+        .where("memberId", "==", memberId)
+        .where("month", "==", month)
+        .where("status", "==", "verified")
+        .limit(1)
+        .get();
+
+      const hasVerifiedPaymentThisMonth = !snapshot.empty;
+
+      if (hasVerifiedPaymentThisMonth) {
+        // Already paid this month, no fine on additional payments
+        console.log("✅ Already has verified payment this month - no fine");
+        return { isLate: false, isFirstPayment: false, fineAmount: 0 };
+      } else {
+        // First payment and it's after the 7th - LATE!
+        console.log("⚠️ Late first payment - R50 fine applies");
+        return { isLate: true, isFirstPayment: true, fineAmount: 50 };
+      }
+    } catch (error) {
+      console.error("Check late payment error:", error);
+      // On error, don't apply fine (benefit of doubt)
+      return { isLate: false, isFirstPayment: true, fineAmount: 0 };
+    }
+  },
+
   // ==========================================
   // MEMBER REGISTRATION
   // ==========================================
@@ -539,12 +595,30 @@ const Database = {
       // Generate submission reference (TRF-XXXXX)
       const reference = await this.generateSubmissionRef();
 
-      // Determine if payment is late (after 7th)
-      const paymentDate = submissionData.paymentDate
-        ? new Date(submissionData.paymentDate)
-        : new Date();
-      const isLate = paymentDate.getDate() > APP_SETTINGS.paymentDeadlineDay;
-      const fineAmount = isLate ? APP_SETTINGS.lateFee : 0;
+      // Check for late payment using the proper rule
+      // First payment after 7th = R50 fine
+      // Subsequent payments in same month = NO fine
+      let isLate = false;
+      let fineAmount = 0;
+      let isFirstPayment = true;
+
+      if (member) {
+        const lateCheck = await this.checkLatePayment(
+          member.id,
+          submissionData.paymentMonth,
+        );
+        isLate = lateCheck.isLate;
+        fineAmount = lateCheck.fineAmount;
+        isFirstPayment = lateCheck.isFirstPayment;
+        console.log("📅 Late payment check:", lateCheck);
+      } else {
+        // No member found, check date manually
+        const paymentDate = submissionData.paymentDate
+          ? new Date(submissionData.paymentDate)
+          : new Date();
+        isLate = paymentDate.getDate() > APP_SETTINGS.paymentDeadlineDay;
+        fineAmount = isLate ? APP_SETTINGS.lateFee : 0;
+      }
 
       // Validate amount
       const amount = parseFloat(submissionData.amount);
@@ -1275,10 +1349,6 @@ const Database = {
   async getMemberStats(phone) {
     try {
       const normalizedPhone = phone.replace(/[\s-]/g, "");
-
-      // Get member from Firestore (full details)
-      const member = await this.getMemberByPhone(normalizedPhone);
-      if (!member) return null;
 
       // Get real-time stats from Realtime DB
       const realtimeStats = await this.getMemberRealtimeStats(member.id);

@@ -689,6 +689,52 @@
       </div>
     </div>
 
+    <!-- POP Viewer Modal -->
+    <div class="pop-viewer" id="popViewer">
+      <div class="pop-viewer-header">
+        <h3><i class="fa-solid fa-receipt"></i> Proof of Payment</h3>
+        <button class="pop-viewer-close" id="closePopViewer" title="Close proof of payment viewer">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+
+      <div class="pop-viewer-body">
+        <div class="pop-viewer-content">
+          <!-- Image viewer -->
+          <img
+            src=""
+            alt="Proof of Payment"
+            class="pop-viewer-image"
+            id="popViewerImage"
+          />
+
+          <!-- PDF viewer (iframe) -->
+          <iframe
+            src=""
+            class="pop-viewer-pdf"
+            id="popViewerPdf"
+            style="display: none"
+          ></iframe>
+        </div>
+
+        <!-- Info panel -->
+        <div class="pop-viewer-info" id="popViewerInfo">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+
+      <div class="pop-viewer-footer">
+        <button class="btn btn-danger" id="popRejectBtn">
+          <i class="fa-solid fa-times"></i>
+          Reject
+        </button>
+        <button class="btn btn-success" id="popApproveBtn">
+          <i class="fa-solid fa-check"></i>
+          Approve
+        </button>
+      </div>
+    </div>
+
     <!-- Confirm Modal -->
     <div class="modal" id="confirmModal">
       <div class="modal-backdrop"></div>

@@ -270,6 +270,54 @@
         color: #666;
         text-align: center;
       }
+
+      /* Prevent horizontal scroll */
+      html,
+      body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      /* Page container */
+      .submit-page {
+        min-height: 100vh;
+        background: var(--neutral-50);
+      }
+
+      /* Form container */
+      .submit-form {
+        padding: 1.5rem;
+        max-width: 500px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      /* File upload zone */
+      .file-upload {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      /* Preview image */
+      .preview-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+      }
+
+      /* Success modal */
+      .modal-container {
+        width: 90%;
+        max-width: 400px;
+        margin: 0 auto;
+      }
     </style>
   </head>
   <body>
